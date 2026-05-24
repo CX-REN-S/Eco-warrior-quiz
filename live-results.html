@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Results — Eco-Warrior Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html">Personality Test</a>
+  <a href="archetypes.html">Archetypes</a>
+  <a href="live-results.html" class="active">Live Results</a>
+</nav>
+
+<div class="page-wrap">
+  <h1>Live Results</h1>
+  <p class="lead results-meta" id="results-meta"></p>
+
+  <div id="no-data" class="no-data hidden">
+    <p>No quiz attempts recorded on this device yet.</p>
+    <a href="index.html" class="btn btn-primary">Take the Quiz</a>
+  </div>
+
+  <div class="results-grid" id="results-grid"></div>
+  <div class="results-bars card" id="results-bars"></div>
+</div>
+
+<script src="live-results.js"></script>
+</body>
+</html>

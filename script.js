@@ -403,7 +403,20 @@ function showResult() {
   });
 
   showPage('result');
+  saveToHistory(primary, pcts);
   submitToGoogleForm(scores, pcts, primary, secondary);
+}
+
+// =============================================================================
+// LOCAL HISTORY
+// =============================================================================
+function saveToHistory(primary, pcts) {
+  const HISTORY_KEY = 'ecoQuizHistory';
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    history.push({ primary, pcts, ts: Date.now() });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (e) {}
 }
 
 // =============================================================================

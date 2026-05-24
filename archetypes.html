@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Archetypes — Eco-Warrior Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html">Personality Test</a>
+  <a href="archetypes.html" class="active">Archetypes</a>
+  <a href="live-results.html">Live Results</a>
+</nav>
+
+<div class="arch-page">
+
+  <header class="arch-page-header">
+    <h1>The Four Archetypes</h1>
+    <p>Every eco-warrior has a unique style. Some lead with data, others with heart. Some build systems, others defend wild places. Discover the four archetypes — and what makes each one essential.</p>
+  </header>
+
+  <div id="arch-sections"></div>
+
+</div>
+
+<script src="archetypes.js"></script>
+<script>
+const ORDER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
+const container = document.getElementById('arch-sections');
+
+ORDER.forEach((key, i) => {
+  const a = ARCHETYPES_CONTENT[key];
+  const flip = i % 2 === 1; // alternate layout
+
+  const section = document.createElement('section');
+  section.className = 'arch-section' + (flip ? ' arch-section--flip' : '');
+
+  section.innerHTML = `
+    <div class="arch-section-visual">
+      <div class="arch-visual-panel" style="--accent: ${a.accentColor}">
+        <img src="${a.image}" alt="${a.imageAlt}" class="arch-img" onerror="this.style.display='none'">
+        <div class="arch-visual-fallback">
+          <span class="arch-visual-icon">${a.icon}</span>
+        </div>
+      </div>
+    </div>
+    <div class="arch-section-text">
+      <p class="arch-section-label">Archetype ${i + 1} of 4</p>
+      <h2 class="arch-section-name">${a.name}</h2>
+      <p class="arch-section-tagline">${a.tagline}</p>
+      <p class="arch-section-desc">${a.description}</p>
+      <div class="arch-strengths">
+        <p class="arch-meta-label">Core strengths</p>
+        <div class="arch-pills">${a.strengths.map(s => `<span class="arch-pill">${s}</span>`).join('')}</div>
+      </div>
+      <div class="arch-impact">
+        <p class="arch-meta-label">How you make an impact</p>
+        <p class="arch-impact-text">${a.impact}</p>
+      </div>
+      <div class="arch-next">
+        <span class="arch-next-label">Try this →</span>
+        <span class="arch-next-text">${a.nextStep}</span>
+      </div>
+    </div>`;
+
+  container.appendChild(section);
+
+  // Divider between sections (not after last)
+  if (i < ORDER.length - 1) {
+    const div = document.createElement('div');
+    div.className = 'arch-divider';
+    div.innerHTML = '<span class="arch-divider-icon">🌿</span>';
+    container.appendChild(div);
+  }
+});
+</script>
+</body>
+</html>
