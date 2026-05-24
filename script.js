@@ -306,8 +306,9 @@ function renderMultiOptions(q) {
       input.type = 'text';
       input.className = 'other-input' + (saved.includes(i) ? '' : ' hidden');
       input.placeholder = 'Please specify...';
+      input.maxLength = 50;
       input.value = otherText;
-      input.addEventListener('input', e => { otherText = e.target.value; });
+      input.addEventListener('input', e => { otherText = e.target.value.trim().slice(0, 50); });
       elOptionsMulti.appendChild(input);
 
       cb.addEventListener('change', () => input.classList.toggle('hidden', !cb.checked));
