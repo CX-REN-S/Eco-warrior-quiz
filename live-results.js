@@ -2,7 +2,7 @@
 // LIVE RESULTS — Mentimeter-style word cloud
 // =============================================================================
 // PASTE YOUR PUBLISHED GOOGLE SHEETS CSV URL HERE:
-const RESULTS_CSV_URL = 'PASTE_PUBLIC_GOOGLE_SHEETS_CSV_URL_HERE';
+const RESULTS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTpFde2T9Aieyt5lKHF7yScDD_HQpZ9St8wdX5nboTaZWjAny1STNhmng_nh0ml5UQSo76taq_99Evp/pub?output=csv';
 
 const HISTORY_KEY = 'ecoQuizHistory';
 const ARCHETYPE_META = {
