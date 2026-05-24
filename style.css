@@ -353,8 +353,21 @@ body {
 .live-source--sheets { color: var(--moss); }
 .live-source--local { color: var(--earth); }
 .live-source--demo { color: var(--text-light); }
+.live-source--error { color: #b8651a; }
 .live-total { color: var(--text-mid); font-weight: 600; }
 .live-updated { color: var(--text-light); }
+
+.live-notice {
+  background: #fdf3e3;
+  border: 1px solid rgba(184,101,26,0.30);
+  border-left: 4px solid #b8651a;
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  color: #6b4012;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
 
 .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
 
