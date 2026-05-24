@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eco-Warrior & Wildlife Personality Test</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="test-banner" class="test-banner hidden">⚠️ TEST MODE — submissions logged, not sent</div>
+
+  <!-- Hidden iframe + form for Google Form submission (no page redirect) -->
+  <iframe name="hidden-form-target" style="display:none;" aria-hidden="true"></iframe>
+  <form id="google-form" method="POST" target="hidden-form-target" style="display:none;" aria-hidden="true"></form>
+
+  <div class="app">
+
+    <!-- LANDING -->
+    <section id="page-landing" class="page active">
+      <div class="card landing-card">
+        <div class="hero-icon">🌿</div>
+        <h1>Eco-Warrior &amp;<br>Wildlife Personality Test</h1>
+        <p class="subtitle">Discover your inner environmental archetype. Are you a compassionate protector, a scientific innovator, a community builder, or a fearless defender of the wild?</p>
+        <p class="tagline">8 questions · 2 minutes · Find your archetype</p>
+        <button class="btn btn-primary" id="btn-start">Start the Quiz</button>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="page-quiz" class="page">
+      <div class="quiz-header">
+        <div class="progress-wrap">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-label" id="progress-label">Question 1 of 8</div>
+      </div>
+      <div class="card question-card">
+        <p class="q-number" id="q-number">Q1</p>
+        <h2 class="q-text" id="q-text"></h2>
+        <div id="options-single" class="options-list"></div>
+        <div id="options-multi" class="options-list hidden"></div>
+        <div class="quiz-nav">
+          <button class="btn btn-secondary" id="btn-back">Back</button>
+          <button class="btn btn-primary" id="btn-next" disabled>Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="page-result" class="page">
+      <div class="card result-card">
+        <div class="result-icon" id="result-icon"></div>
+        <p class="result-label">Your archetype is</p>
+        <h2 class="result-title" id="result-title"></h2>
+        <p class="result-desc" id="result-desc"></p>
+        <div class="secondary-block">
+          <span class="secondary-label">Secondary archetype: </span>
+          <span class="secondary-name" id="secondary-name"></span>
+        </div>
+        <div class="score-bars" id="score-bars"></div>
+        <button class="btn btn-primary" id="btn-retake">Retake Quiz</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Test mode modal -->
+  <div id="test-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>TEST MODE — Submission Data</h3>
+      <p class="modal-note">Verify these field IDs match your Google Form. Set <code>TEST_MODE = false</code> in script.js when ready.</p>
+      <pre id="test-modal-content"></pre>
+      <button class="btn btn-primary" id="test-modal-close">Close</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
