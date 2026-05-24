@@ -303,38 +303,41 @@ body {
   background: var(--white);
   border: 1px solid rgba(122,171,138,0.12);
   border-radius: var(--radius);
-  padding: 36px 28px;
+  padding: 28px 20px;
   box-shadow: var(--shadow);
   margin-bottom: 24px;
 }
 
 #live-cloud {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  gap: 12px 20px;
+  gap: 6px;
   width: 100%;
 }
 
-/*
- * Font size is driven by --word-pct (0–1) set inline by JS.
- * Mobile:  0.85rem (min) … 1.85rem (max)
- * Desktop: 1.05rem (min) … 2.7rem  (max)
- * The calc() linearly interpolates between those two values.
- */
+.cloud-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
 .cloud-word {
   display: inline-block;
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
+  white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
-  max-width: 240px;
+  max-width: 95%;
   cursor: default;
   user-select: none;
   animation: fadeInWord 0.4s ease both;
-  padding: 2px 4px;
+  padding: 1px 3px;
 }
 
 @keyframes fadeInWord {
@@ -435,7 +438,8 @@ body {
 /* 640px+ — larger phones / small tablets */
 @media (min-width: 640px) {
   .site-nav a { font-size: 0.88rem; }
-  .cloud-word { max-width: 280px; }
+  #live-cloud { gap: 8px; }
+  .cloud-row  { gap: 18px; }
 }
 
 /* 768px+ — tablets */
@@ -443,8 +447,9 @@ body {
   .arch-page { padding: 56px 32px 80px; }
   .arch-page-header { margin-bottom: 64px; }
   .live-page { padding: 56px 32px 80px; }
-  .live-cloud-card { padding: 44px 36px; }
-  .cloud-word { max-width: 320px; }
+  .live-cloud-card { padding: 36px 32px; }
+  #live-cloud { gap: 10px; }
+  .cloud-row  { gap: 22px; }
 }
 
 /* 1024px+ — desktop */
@@ -459,26 +464,27 @@ body {
   .arch-divider { padding: 56px 0; }
 
   .live-page { padding: 64px 24px 96px; }
-  .live-cloud-card { padding: 52px 48px; }
-  #live-cloud { gap: 16px 28px; }
-  .cloud-word { max-width: 400px; }
+  .live-cloud-card { padding: 48px 44px; }
+  #live-cloud { gap: 12px; }
+  .cloud-row  { gap: 28px; }
 }
 
 /* 1280px+ — large desktop/monitor */
 @media (min-width: 1280px) {
   .live-page { max-width: 1100px; }
-  .live-cloud-card { padding: 64px 64px; }
-  #live-cloud { gap: 18px 36px; }
-  .cloud-word { max-width: 480px; }
+  .live-cloud-card { padding: 56px 60px; }
+  #live-cloud { gap: 14px; }
+  .cloud-row  { gap: 36px; }
 }
 
-/* Narrow phones — extra tightening */
+/* Narrow phones — tighten spacing */
 @media (max-width: 400px) {
   .app { padding: 16px 12px; }
   .q-text { font-size: 1.05rem; }
   .live-status { flex-direction: column; align-items: flex-start; }
-  #live-cloud { gap: 8px 12px; }
-  .cloud-word { max-width: 180px; }
+  .live-cloud-card { padding: 20px 14px; }
+  #live-cloud { gap: 5px; }
+  .cloud-row  { gap: 10px; }
 }
 
 /* Stacked arch sections on mobile (below 1024px) */

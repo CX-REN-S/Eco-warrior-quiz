@@ -81,7 +81,6 @@ function renderCloud(entries, source, errorMsg) {
 
   const total = entries.reduce((a, e) => a + e.count, 0);
 
-  // Notice banner
   if (errorMsg) {
     noticeEl.textContent = errorMsg;
     noticeEl.classList.remove('hidden');
@@ -90,7 +89,6 @@ function renderCloud(entries, source, errorMsg) {
     noticeEl.textContent = '';
   }
 
-  // Source label
   if (errorMsg) {
     sourceEl.textContent = '⚠️ Google Sheets CSV format error — showing demo data';
     sourceEl.className   = 'live-source live-source--error';
@@ -105,30 +103,92 @@ function renderCloud(entries, source, errorMsg) {
   totalEl.textContent   = `${total} pledge${total !== 1 ? 's' : ''}`;
   updatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
-  // Sort by count desc, cap at MAX_DISPLAY_PLEDGES
   const sorted   = [...entries].sort((a, b) => b.count - a.count).slice(0, MAX_DISPLAY_PLEDGES);
   const maxCount = Math.max(...sorted.map(e => e.count), 1);
 
+  const isMobile = window.innerWidth < 768;
+  const minRem   = isMobile ? 0.75 : 1.0;
+  const maxRem   = isMobile ? 1.6  : 2.6;
+
+  // Estimate display width of a pledge at its font size (px).
+  // ~0.58 × fontSize(px) × charCount is a reasonable monospace-safe approximation.
+  const BASE_PX   = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const CHAR_COEF = 0.58;
+
+  function estWidth(pledge, remSize) {
+    return pledge.length * remSize * BASE_PX * CHAR_COEF;
+  }
+
+  // Available inner width of the cloud container (minus padding already in CSS).
+  const containerW = cloudEl.offsetWidth || (window.innerWidth - 32);
+
+  // Build item objects with pre-computed sizes.
+  const items = sorted.map((e, i) => {
+    const pct   = e.count / maxCount;
+    const rem   = minRem + pct * (maxRem - minRem);
+    return {
+      pledge:  e.pledge,
+      rem,
+      pct,
+      opacity: 0.65 + pct * 0.35,
+      color:   PLEDGE_COLORS[i % PLEDGE_COLORS.length],
+      estW:    estWidth(e.pledge, rem),
+    };
+  });
+
+  // ------------------------------------------------------------------
+  // Row packing: greedy left-to-right bin packing.
+  // A row fits a second item only when both items' estimated widths
+  // plus a gap fit within the container and neither item is "large"
+  // (pct > 0.55 → solo row so it gets prominence it deserves).
+  // ------------------------------------------------------------------
+  const GAP_PX   = isMobile ? 14 : 24;
+  const rows     = [];
+  let   i        = 0;
+
+  while (i < items.length) {
+    const cur = items[i];
+    const next = items[i + 1];
+
+    const curSolo = cur.pct > 0.55;
+
+    const pairFits = next &&
+      !curSolo &&
+      next.pct <= 0.55 &&
+      (cur.estW + next.estW + GAP_PX) <= containerW * 0.92;
+
+    if (pairFits) {
+      rows.push([cur, next]);
+      i += 2;
+    } else {
+      rows.push([cur]);
+      i += 1;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // DOM: one .cloud-row <div> per row, items as <span class="cloud-word">
+  // ------------------------------------------------------------------
   cloudEl.innerHTML = '';
+  let delayIdx = 0;
 
-  const isMobile = window.innerWidth < 640;
-  const minRem = isMobile ? 0.78 : 1.0;
-  const maxRem = isMobile ? 1.55 : 2.7;
+  rows.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'cloud-row';
 
-  sorted.forEach((e, i) => {
-    const pct     = e.count / maxCount;
-    const fs      = (minRem + pct * (maxRem - minRem)).toFixed(2);
-    const opacity = 0.65 + pct * 0.35;
-    const color   = PLEDGE_COLORS[i % PLEDGE_COLORS.length];
+    row.forEach(item => {
+      const el = document.createElement('span');
+      el.className            = 'cloud-word';
+      el.textContent          = item.pledge;
+      el.style.fontSize       = item.rem.toFixed(2) + 'rem';
+      el.style.color          = item.color;
+      el.style.opacity        = item.opacity;
+      el.style.animationDelay = (delayIdx * 0.07) + 's';
+      rowEl.appendChild(el);
+      delayIdx++;
+    });
 
-    const el = document.createElement('span');
-    el.className            = 'cloud-word';
-    el.textContent          = e.pledge;
-    el.style.fontSize       = fs + 'rem';
-    el.style.color          = color;
-    el.style.opacity        = opacity;
-    el.style.animationDelay = (i * 0.06) + 's';
-    cloudEl.appendChild(el);
+    cloudEl.appendChild(rowEl);
   });
 }
 
