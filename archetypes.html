@@ -32,12 +32,25 @@
 const ORDER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
 const container = document.getElementById('arch-sections');
 
+// Detect highlight parameter from URL
+const params = new URLSearchParams(window.location.search);
+const highlightSlug = params.get('highlight');
+const slugToKey = {
+  'captain-sustainables': 'captainSustainables',
+  'warrior-of-the-wild': 'warriorOfTheWild',
+  'dr-environlove': 'drEnvironlove',
+  'sir-animalot': 'sirAnimalot',
+};
+const highlightKey = highlightSlug ? slugToKey[highlightSlug] : null;
+
 ORDER.forEach((key, i) => {
   const a = ARCHETYPES_CONTENT[key];
-  const flip = i % 2 === 1; // alternate layout
+  const flip = i % 2 === 1;
+  const isHighlighted = key === highlightKey;
 
   const section = document.createElement('section');
-  section.className = 'arch-section' + (flip ? ' arch-section--flip' : '');
+  section.className = 'arch-section' + (flip ? ' arch-section--flip' : '') + (isHighlighted ? ' arch-section--highlight' : '');
+  section.id = 'arch-' + key;
 
   section.innerHTML = `
     <div class="arch-section-visual">
@@ -50,6 +63,7 @@ ORDER.forEach((key, i) => {
     </div>
     <div class="arch-section-text">
       <p class="arch-section-label">Archetype ${i + 1} of 4</p>
+      ${isHighlighted ? '<span class="arch-your-badge">Your main archetype</span>' : ''}
       <h2 class="arch-section-name">${a.name}</h2>
       <p class="arch-section-tagline">${a.tagline}</p>
       <p class="arch-section-desc">${a.description}</p>
@@ -77,6 +91,16 @@ ORDER.forEach((key, i) => {
     container.appendChild(div);
   }
 });
+
+// Smooth scroll to highlighted section
+if (highlightKey) {
+  setTimeout(() => {
+    const target = document.getElementById('arch-' + highlightKey);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 300);
+}
 </script>
 </body>
 </html>

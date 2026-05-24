@@ -16,17 +16,30 @@
   <a href="live-results.html" class="active">Live Results</a>
 </nav>
 
-<div class="page-wrap">
-  <h1>Live Results</h1>
-  <p class="lead results-meta" id="results-meta"></p>
+<div class="live-page">
 
-  <div id="no-data" class="no-data hidden">
-    <p>No quiz attempts recorded on this device yet.</p>
-    <a href="index.html" class="btn btn-primary">Take the Quiz</a>
+  <header class="live-page-header">
+    <h1>Live Archetype Results</h1>
+    <p>See which eco-warrior archetypes are appearing across all quiz responses.</p>
+  </header>
+
+  <div class="live-cloud-card">
+    <div id="live-cloud"></div>
   </div>
 
-  <div class="results-grid" id="results-grid"></div>
-  <div class="results-bars card" id="results-bars"></div>
+  <div class="live-status">
+    <div class="live-status-left">
+      <span id="live-source" class="live-source"></span>
+      <span id="live-total" class="live-total"></span>
+    </div>
+    <div class="live-status-right">
+      <span id="live-updated" class="live-updated"></span>
+      <button class="btn btn-secondary btn-sm" id="btn-refresh">Refresh</button>
+    </div>
+  </div>
+
+  <div id="live-breakdown" class="live-breakdown"></div>
+
 </div>
 
 <script src="live-results.js"></script>

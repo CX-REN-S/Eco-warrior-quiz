@@ -1,81 +1,170 @@
+// =============================================================================
+// LIVE RESULTS — Mentimeter-style word cloud
+// =============================================================================
+// PASTE YOUR PUBLISHED GOOGLE SHEETS CSV URL HERE:
+const RESULTS_CSV_URL = 'PASTE_PUBLIC_GOOGLE_SHEETS_CSV_URL_HERE';
+
 const HISTORY_KEY = 'ecoQuizHistory';
 const ARCHETYPE_META = {
-  sirAnimalot:         { name: 'Sir Animalot',         icon: '🐾' },
-  drEnvironlove:       { name: 'Dr. Environlove',       icon: '🔬' },
-  captainSustainables: { name: 'Captain Sustainables',  icon: '♻️' },
-  warriorOfTheWild:    { name: 'Warrior of the Wild',   icon: '🌲' },
+  'Captain Sustainables':  { key: 'captainSustainables',  icon: '♻️', color: '#4a7c59' },
+  'Warrior of the Wild':   { key: 'warriorOfTheWild',     icon: '🌲', color: '#2c4a2e' },
+  'Dr. Environlove':       { key: 'drEnvironlove',        icon: '🔬', color: '#7aab8a' },
+  'Sir Animalot':          { key: 'sirAnimalot',          icon: '🐾', color: '#8c6d3f' },
 };
-const ORDER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
 
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
-  catch { return []; }
-}
+let autoRefreshTimer = null;
 
-function render() {
-  const history = loadHistory();
-  const metaEl  = document.getElementById('results-meta');
-  const gridEl  = document.getElementById('results-grid');
-  const barsEl  = document.getElementById('results-bars');
-  const noData  = document.getElementById('no-data');
-
-  if (history.length === 0) {
-    noData.classList.remove('hidden');
-    gridEl.classList.add('hidden');
-    barsEl.classList.add('hidden');
-    metaEl.textContent = '';
-    return;
+// =============================================================================
+// DATA SOURCES
+// =============================================================================
+async function fetchGoogleSheets() {
+  if (!RESULTS_CSV_URL || RESULTS_CSV_URL.includes('PASTE_PUBLIC')) {
+    throw new Error('No CSV URL configured');
   }
+  const res = await fetch(RESULTS_CSV_URL);
+  if (!res.ok) throw new Error('CSV fetch failed');
+  const text = await res.text();
+  return parseCSV(text);
+}
 
-  noData.classList.add('hidden');
-  gridEl.classList.remove('hidden');
-  barsEl.classList.remove('hidden');
+function parseCSV(text) {
+  const lines = text.trim().split('\n').slice(1); // skip header
+  const counts = {};
+  lines.forEach(line => {
+    const [archetype, count] = line.split(',');
+    if (archetype && count) {
+      counts[archetype.trim()] = parseInt(count.trim(), 10) || 0;
+    }
+  });
+  return counts;
+}
 
-  // Count primary archetype wins
-  const counts = { sirAnimalot: 0, drEnvironlove: 0, captainSustainables: 0, warriorOfTheWild: 0 };
-  history.forEach(r => { if (counts[r.primary] !== undefined) counts[r.primary]++; });
-  const total = history.length;
+function loadLocalStorage() {
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    const counts = {};
+    Object.keys(ARCHETYPE_META).forEach(name => { counts[name] = 0; });
+    history.forEach(r => {
+      const name = Object.keys(ARCHETYPE_META).find(n => ARCHETYPE_META[n].key === r.primary);
+      if (name) counts[name]++;
+    });
+    return counts;
+  } catch {
+    return {};
+  }
+}
 
-  metaEl.textContent = `Based on ${total} quiz attempt${total !== 1 ? 's' : ''} on this device.`;
+function getDemoData() {
+  return {
+    'Captain Sustainables': 12,
+    'Warrior of the Wild': 8,
+    'Dr. Environlove': 20,
+    'Sir Animalot': 5,
+  };
+}
 
-  // Stat cards
-  gridEl.innerHTML = '';
-  ORDER.forEach(key => {
-    const m   = ARCHETYPE_META[key];
-    const pct = Math.round(counts[key] / total * 100);
-    const card = document.createElement('div');
-    card.className = 'result-stat-card';
-    card.innerHTML = `<div class="stat-icon">${m.icon}</div>
-      <div class="stat-name">${m.name}</div>
-      <div class="stat-pct">${pct}%</div>
-      <div class="stat-count">${counts[key]} of ${total}</div>`;
-    gridEl.appendChild(card);
+// =============================================================================
+// RENDER WORD CLOUD
+// =============================================================================
+function renderCloud(counts, source) {
+  const cloudEl = document.getElementById('live-cloud');
+  const sourceEl = document.getElementById('live-source');
+  const totalEl = document.getElementById('live-total');
+  const updatedEl = document.getElementById('live-updated');
+  const breakdownEl = document.getElementById('live-breakdown');
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  // Update status
+  if (source === 'sheets') {
+    sourceEl.textContent = '🌐 Showing shared Google Sheets results';
+    sourceEl.className = 'live-source live-source--sheets';
+  } else if (source === 'local') {
+    sourceEl.textContent = '💾 Showing local test results';
+    sourceEl.className = 'live-source live-source--local';
+  } else {
+    sourceEl.textContent = '🎭 Showing demo data';
+    sourceEl.className = 'live-source live-source--demo';
+  }
+  totalEl.textContent = `${total} response${total !== 1 ? 's' : ''}`;
+  updatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+  // Build word cloud
+  const entries = Object.entries(counts).map(([name, count]) => ({
+    name,
+    count,
+    meta: ARCHETYPE_META[name],
+  })).filter(e => e.meta);
+
+  const maxCount = Math.max(...entries.map(e => e.count), 1);
+
+  cloudEl.innerHTML = '';
+  entries.forEach((e, i) => {
+    const pct = e.count / maxCount;
+    const fontSize = 1.2 + pct * 2.8; // 1.2rem to 4rem
+    const opacity = 0.7 + pct * 0.3;
+
+    const word = document.createElement('div');
+    word.className = 'cloud-word';
+    word.style.fontSize = fontSize + 'rem';
+    word.style.color = e.meta.color;
+    word.style.opacity = opacity;
+    word.style.animationDelay = (i * 0.1) + 's';
+    word.innerHTML = `<span class="cloud-icon">${e.meta.icon}</span> ${e.name}`;
+    cloudEl.appendChild(word);
   });
 
-  // Score bars (average pct across all attempts)
-  const avgPcts = {};
-  ORDER.forEach(key => {
-    const sum = history.reduce((acc, r) => acc + (r.pcts?.[key] || 0), 0);
-    avgPcts[key] = Math.round(sum / total);
-  });
-
-  barsEl.innerHTML = '<h2>Average score breakdown</h2>';
-  ORDER.forEach(key => {
-    const m   = ARCHETYPE_META[key];
-    const pct = avgPcts[key];
+  // Breakdown list
+  breakdownEl.innerHTML = '<h3>Breakdown</h3>';
+  entries.sort((a, b) => b.count - a.count).forEach(e => {
+    const pct = total > 0 ? Math.round(e.count / total * 100) : 0;
     const row = document.createElement('div');
-    row.className = 'score-row';
+    row.className = 'breakdown-row';
     row.innerHTML = `
-      <div class="score-row-header">
-        <span class="score-name">${m.icon} ${m.name}</span>
-        <span class="score-pct">${pct}%</span>
-      </div>
-      <div class="score-bar-bg"><div class="score-bar-fill" style="width:0%"></div></div>`;
-    barsEl.appendChild(row);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      row.querySelector('.score-bar-fill').style.width = pct + '%';
-    }));
+      <span class="breakdown-name">${e.meta.icon} ${e.name}</span>
+      <span class="breakdown-bar-wrap">
+        <span class="breakdown-bar" style="width: ${pct}%; background: ${e.meta.color};"></span>
+      </span>
+      <span class="breakdown-count">${e.count} (${pct}%)</span>`;
+    breakdownEl.appendChild(row);
   });
 }
 
-render();
+// =============================================================================
+// LOAD DATA
+// =============================================================================
+async function loadData() {
+  try {
+    const counts = await fetchGoogleSheets();
+    renderCloud(counts, 'sheets');
+  } catch {
+    const localCounts = loadLocalStorage();
+    const localTotal = Object.values(localCounts).reduce((a, b) => a + b, 0);
+    if (localTotal > 0) {
+      renderCloud(localCounts, 'local');
+    } else {
+      renderCloud(getDemoData(), 'demo');
+    }
+  }
+}
+
+// =============================================================================
+// AUTO-REFRESH
+// =============================================================================
+function startAutoRefresh() {
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  if (!RESULTS_CSV_URL || RESULTS_CSV_URL.includes('PASTE_PUBLIC')) return;
+  autoRefreshTimer = setInterval(() => {
+    loadData();
+  }, 12000); // 12 seconds
+}
+
+// =============================================================================
+// INIT
+// =============================================================================
+document.getElementById('btn-refresh').addEventListener('click', () => {
+  loadData();
+});
+
+loadData();
+startAutoRefresh();

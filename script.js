@@ -403,6 +403,16 @@ function showResult() {
   });
 
   showPage('result');
+
+  // Set Explore Archetypes link with highlight parameter
+  const slugMap = {
+    sirAnimalot: 'sir-animalot',
+    drEnvironlove: 'dr-environlove',
+    captainSustainables: 'captain-sustainables',
+    warriorOfTheWild: 'warrior-of-the-wild',
+  };
+  document.getElementById('btn-explore').href = `archetypes.html?highlight=${slugMap[primary]}`;
+
   saveToHistory(primary, pcts);
   submitToGoogleForm(scores, pcts, primary, secondary);
 }
