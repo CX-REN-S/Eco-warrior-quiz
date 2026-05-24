@@ -111,18 +111,22 @@ function renderCloud(entries, source, errorMsg) {
 
   cloudEl.innerHTML = '';
 
+  const isMobile = window.innerWidth < 640;
+  const minRem = isMobile ? 0.78 : 1.0;
+  const maxRem = isMobile ? 1.55 : 2.7;
+
   sorted.forEach((e, i) => {
-    const pct     = e.count / maxCount;            // 0–1
-    const opacity = 0.65 + pct * 0.35;             // 0.65–1.0
+    const pct     = e.count / maxCount;
+    const fs      = (minRem + pct * (maxRem - minRem)).toFixed(2);
+    const opacity = 0.65 + pct * 0.35;
     const color   = PLEDGE_COLORS[i % PLEDGE_COLORS.length];
 
     const el = document.createElement('span');
-    el.className        = 'cloud-word';
-    el.textContent      = e.pledge;
-    el.style.color      = color;
-    el.style.opacity    = opacity;
-    // Font size is set via a CSS custom property so the stylesheet clamp() controls the range
-    el.style.setProperty('--word-pct', pct.toFixed(3));
+    el.className            = 'cloud-word';
+    el.textContent          = e.pledge;
+    el.style.fontSize       = fs + 'rem';
+    el.style.color          = color;
+    el.style.opacity        = opacity;
     el.style.animationDelay = (i * 0.06) + 's';
     cloudEl.appendChild(el);
   });
