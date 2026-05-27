@@ -107,8 +107,8 @@ function renderCloud(entries, source, errorMsg) {
   const maxCount = Math.max(...sorted.map(e => e.count), 1);
 
   const isMobile = window.innerWidth < 768;
-  const minRem   = isMobile ? 0.75 : 1.0;
-  const maxRem   = isMobile ? 1.6  : 2.6;
+  const minRem   = isMobile ? 0.65 : 1.0;
+  const maxRem   = isMobile ? 1.25 : 2.6;
 
   // Estimate display width of a pledge at its font size (px).
   // ~0.58 × fontSize(px) × charCount is a reasonable monospace-safe approximation.
@@ -142,7 +142,8 @@ function renderCloud(entries, source, errorMsg) {
   // plus a gap fit within the container and neither item is "large"
   // (pct > 0.55 → solo row so it gets prominence it deserves).
   // ------------------------------------------------------------------
-  const GAP_PX   = isMobile ? 14 : 24;
+  const GAP_PX    = isMobile ? 12 : 24;
+  const SOLO_PCT  = isMobile ? 0.70 : 0.55; // narrower solo threshold on mobile
   const rows     = [];
   let   i        = 0;
 
@@ -150,11 +151,11 @@ function renderCloud(entries, source, errorMsg) {
     const cur = items[i];
     const next = items[i + 1];
 
-    const curSolo = cur.pct > 0.55;
+    const curSolo = cur.pct > SOLO_PCT;
 
     const pairFits = next &&
       !curSolo &&
-      next.pct <= 0.55 &&
+      next.pct <= SOLO_PCT &&
       (cur.estW + next.estW + GAP_PX) <= containerW * 0.92;
 
     if (pairFits) {

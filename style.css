@@ -59,6 +59,7 @@ body {
   display: flex; gap: 2px; align-items: center;
   flex: 1; justify-content: center;
   flex-wrap: wrap;
+  /* Mobile: scrollable tab row — see @media below */
 }
 .site-nav a, .nav-links a {
   color: rgba(255,255,255,0.70); text-decoration: none;
@@ -249,24 +250,18 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 .score-row-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
 .score-name { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
 .score-pct  { font-size: 0.88rem; font-weight: 700; color: var(--moss); }
-.score-bar-bg   { background: #ddd8ce; border-radius: 50px; height: 10px; overflow: hidden; }
-.score-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--moss), var(--sage)); transition: width 0.8s ease; }
+/* Composition-bar: track is near-invisible so the fill reads as a proportional
+   share of a whole, not a depleted progress bar out of 100. */
+.score-bar-bg   { background: rgba(180,200,185,0.18); border-radius: 50px; height: 10px; overflow: visible; position: relative; }
+.score-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--moss), var(--sage)); transition: width 0.8s ease; box-shadow: 0 1px 4px rgba(74,124,89,0.18); }
 .score-row.primary .score-bar-bg   { height: 14px; }
-.score-row.primary .score-bar-fill { background: linear-gradient(90deg, var(--forest), var(--moss)); }
+.score-row.primary .score-bar-fill { background: linear-gradient(90deg, var(--forest), var(--moss)); box-shadow: 0 2px 8px rgba(44,74,46,0.28); }
 .score-row.primary .score-name     { font-size: 0.95rem; font-weight: 800; color: var(--forest); }
 .score-row.primary .score-pct      { font-size: 0.95rem; color: var(--forest); }
 
 /* ---- RESULT ACTIONS ------------------------------------------------------ */
 .result-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .result-actions .btn { width: 100%; max-width: 320px; }
-.score-name { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
-.score-pct  { font-size: 0.88rem; font-weight: 700; color: var(--moss); }
-.score-bar-bg   { background: #ddd8ce; border-radius: 50px; height: 10px; overflow: hidden; }
-.score-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--moss), var(--sage)); transition: width 0.8s ease; }
-.score-row.primary .score-bar-bg   { height: 14px; }
-.score-row.primary .score-bar-fill { background: linear-gradient(90deg, var(--forest), var(--moss)); }
-.score-row.primary .score-name     { font-size: 0.95rem; font-weight: 800; color: var(--forest); }
-.score-row.primary .score-pct      { font-size: 0.95rem; color: var(--forest); }
 
 /* ---- MULTI-ARCHETYPE RESULT ---------------------------------------------- */
 .result-multi-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 18px; }
@@ -419,6 +414,8 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(122,171,138,0.15);
+  /* Offset below the sticky nav (68px) + breathing room when scrolled to */
+  scroll-margin-top: 88px;
 }
 .arch-your-badge {
   display: inline-block;
@@ -638,16 +635,44 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   .live-cloud-card { padding: 20px 14px; }
   #live-cloud { gap: 5px; }
   .cloud-row  { gap: 10px; }
-  .ark-logo { height: 26px; }
-  .nav-contact-btn { font-size: 0.75rem; padding: 7px 8px; }
 }
 
-/* Nav overflow guard */
+/* Nav overflow guard + mobile horizontal-scroll tabs */
 .site-nav { overflow: visible; }
-.nav-links { min-width: 0; overflow: hidden; }
-@media (max-width: 480px) {
-  .site-nav { padding: 0 6px; gap: 0; }
-  .nav-links a { padding: 12px clamp(6px, 2vw, 12px); font-size: 0.75rem; }
+@media (max-width: 640px) {
+  .site-nav {
+    padding: 0 0 0 8px; /* logo gets left padding; right edge left bare for Contact btn */
+    gap: 0;
+    overflow: hidden; /* clip the scroll-fade pseudo-element */
+  }
+  .nav-ark-logo { padding: 4px 4px; flex-shrink: 0; }
+
+  /* Scroll container for the three page tabs */
+  .nav-links {
+    flex: 1;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;      /* Firefox */
+    position: relative;
+    /* Right-edge fade hints at hidden content */
+    -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
+    mask-image:         linear-gradient(to right, black 70%, transparent 100%);
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+
+  .nav-links a {
+    padding: 14px clamp(10px, 3.5vw, 16px);
+    font-size: 0.82rem;
+    flex-shrink: 0; /* never squish individual tabs */
+  }
+
+  /* Contact button — fixed size, no flex shrink */
+  .nav-contact-wrap { flex-shrink: 0; padding-right: 8px; }
+  .nav-contact-btn  { font-size: 0.78rem; padding: 8px 10px; }
 }
 
 /* Stacked arch sections on mobile (below 1024px) */
