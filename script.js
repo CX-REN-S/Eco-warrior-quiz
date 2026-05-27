@@ -77,7 +77,7 @@ const PLEDGE_TIEBREAKER = {
 const QUESTIONS = [
   // Q1 — not scored, stored as injured_bird
   {
-    text: 'Before Wildlife Carnival, when you show up for work and go about your day, how closely tied do you feel to protecting the environment?',
+    text: 'Before this event, when you show up for work and go about your day, how closely tied do you feel to protecting the environment?',
     type: 'single',
     formField: 'injured_bird',
     scored: false,
