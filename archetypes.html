@@ -11,17 +11,52 @@
 <body>
 
 <nav class="site-nav">
-  <a href="index.html">Personality Test</a>
-  <a href="archetypes.html" class="active">Archetypes</a>
-  <a href="live-results.html">Live Results</a>
+  <a href="index.html" class="nav-ark-logo">
+    <img src="assets/ARK_white_transparent_header.png" alt="ARK Initiative" class="ark-logo">
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Personality Test</a>
+    <a href="archetypes.html" class="active">Archetypes</a>
+    <a href="live-results.html">Live Results</a>
+  </div>
+  <div class="nav-contact-wrap">
+    <button class="nav-contact-btn" id="contact-btn" aria-haspopup="true" aria-expanded="false">Contact Us ▾</button>
+    <div class="nav-contact-dropdown" id="contact-dropdown" role="menu">
+      <div class="nav-contact-item">
+        <img src="assets/LinkedIn_icon.svg.png" alt="" class="nav-contact-icon">
+        <div class="nav-contact-text">
+          <span class="nav-contact-platform">LinkedIn</span>
+          <a class="nav-contact-account" href="https://www.linkedin.com/company/a-r-k-initiative" target="_blank" rel="noopener">A.R.K Initiative</a>
+        </div>
+      </div>
+      <div class="nav-contact-item">
+        <img src="assets/Instagram_icon.png" alt="" class="nav-contact-icon">
+        <div class="nav-contact-text">
+          <span class="nav-contact-platform">Instagram</span>
+          <a class="nav-contact-account" href="https://www.instagram.com/arkinitiative.sg?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">@arkinitiative.sg</a>
+        </div>
+      </div>
+      <div class="nav-contact-item">
+        <img src="assets/Gmail_icon_(2020).png" alt="" class="nav-contact-icon">
+        <div class="nav-contact-text">
+          <span class="nav-contact-platform">Email</span>
+          <span class="nav-contact-account">arkinitiative.bagus.sg@gmail.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </nav>
 
 <div class="arch-page">
 
-  <header class="arch-page-header">
+  <div class="arch-hero">
     <h1>The Four Archetypes</h1>
     <p>Every eco-warrior has a unique style. Some lead with data, others with heart. Some build systems, others defend wild places. Discover the four archetypes — and what makes each one essential.</p>
-  </header>
+    <div class="arch-scroll-prompt">
+      <span class="arch-scroll-arrow">↓</span>
+      <span>Scroll to explore archetypes</span>
+    </div>
+  </div>
 
   <div id="arch-sections"></div>
 
@@ -32,21 +67,23 @@
 const ORDER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
 const container = document.getElementById('arch-sections');
 
-// Detect highlight parameter from URL
 const params = new URLSearchParams(window.location.search);
-const highlightSlug = params.get('highlight');
+const highlightParam = params.get('highlight') || '';
 const slugToKey = {
   'captain-sustainables': 'captainSustainables',
   'warrior-of-the-wild': 'warriorOfTheWild',
   'dr-environlove': 'drEnvironlove',
   'sir-animalot': 'sirAnimalot',
 };
-const highlightKey = highlightSlug ? slugToKey[highlightSlug] : null;
+const highlightKeys = new Set(
+  highlightParam.split(',').map(s => slugToKey[s.trim()]).filter(Boolean)
+);
+const hasHighlight = highlightKeys.size > 0;
 
 ORDER.forEach((key, i) => {
   const a = ARCHETYPES_CONTENT[key];
   const flip = i % 2 === 1;
-  const isHighlighted = key === highlightKey;
+  const isHighlighted = highlightKeys.has(key);
 
   const section = document.createElement('section');
   section.className = 'arch-section' + (flip ? ' arch-section--flip' : '') + (isHighlighted ? ' arch-section--highlight' : '');
@@ -83,7 +120,6 @@ ORDER.forEach((key, i) => {
 
   container.appendChild(section);
 
-  // Divider between sections (not after last)
   if (i < ORDER.length - 1) {
     const div = document.createElement('div');
     div.className = 'arch-divider';
@@ -92,15 +128,50 @@ ORDER.forEach((key, i) => {
   }
 });
 
-// Smooth scroll to highlighted section
-if (highlightKey) {
-  setTimeout(() => {
-    const target = document.getElementById('arch-' + highlightKey);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 300);
+// ---- Highlight mode: arriving from quiz result ----
+if (hasHighlight) {
+  // Reveal all sections immediately without animation
+  container.classList.add('arch-sections--revealed');
+
+  // Scroll to first highlighted archetype
+  const firstKey = ORDER.find(k => highlightKeys.has(k));
+  if (firstKey) {
+    setTimeout(() => {
+      const target = document.getElementById('arch-' + firstKey);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+} else {
+  // ---- Normal browse mode: fade sections in on scroll ----
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('arch-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
+    observer.observe(el);
+  });
 }
+
+// ---- Contact dropdown ----
+const contactBtn = document.getElementById('contact-btn');
+const contactDropdown = document.getElementById('contact-dropdown');
+contactBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const open = contactDropdown.classList.contains('open');
+  contactDropdown.classList.toggle('open', !open);
+  contactBtn.setAttribute('aria-expanded', String(!open));
+});
+document.addEventListener('click', e => {
+  if (!contactBtn.contains(e.target) && !contactDropdown.contains(e.target)) {
+    contactDropdown.classList.remove('open');
+    contactBtn.setAttribute('aria-expanded', 'false');
+  }
+});
 </script>
 </body>
 </html>

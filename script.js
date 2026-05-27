@@ -1,51 +1,17 @@
-// =============================================================================
-// ECO-WARRIOR QUIZ — script.js
-// =============================================================================
-//
-// SETUP CHECKLIST:
-//   1. Set TEST_MODE = true first and open the quiz in a browser.
-//      Complete the quiz — a modal will show all field IDs + values.
-//      Confirm the data looks right before wiring up the real form.
-//
-//   2. Replace FORM_CONFIG.formUrl with your Google Form action URL:
-//      Open your form → click ⋮ → "Get pre-filled link" → fill any field
-//      → submit → copy the URL up to and including "/formResponse"
-//
-//   3. Replace each entry.XXXXXXXXXX with real field IDs from your form.
-//      Find them in the pre-filled URL (?entry.XXXXXXX=value&...) or by
-//      right-clicking each form field → Inspect → look for name="entry.XXX"
-//
-//   4. Set TEST_MODE = false when ready to go live.
-//
-// HOW TO EDIT QUESTIONS:
-//   Edit the QUESTIONS array below. Each question has:
-//     text       — the question string shown to the user
-//     type       — 'single' (radio) or 'multi' (checkboxes)
-//     formField  — key in FORM_CONFIG.fields used for submission
-//     options    — array of { text, scores: { archetypeKey: points } }
-//   For multi-select, one option may have isOther: true to show a text input.
-//
-// ARCHETYPE KEYS: sirAnimalot | drEnvironlove | captainSustainables | warriorOfTheWild
-// =============================================================================
-
-// ---- TEST MODE ---------------------------------------------------------------
-// true  → show red banner + modal after quiz showing all data to be submitted
-// false → silently submit to Google Form (go live)
 const TEST_MODE = false;
 
-// ---- GOOGLE FORM CONFIG ------------------------------------------------------
-// Replace ALL placeholder values before going live.
 const FORM_CONFIG = {
   formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSecsaH29n3g-x-o9aCQU8nyLlFRUr8QHicd5Cn97argkxr8eA/formResponse',
   fields: {
     participant_id:             'entry.213383740',
-    q1:                         'entry.1540349076',
-    q2:                         'entry.1325859119',
-    q3:                         'entry.1011393997',
+    injured_bird:               'entry.1540349076',
+    dream_activity:             'entry.1325859119',
+    litter_in_nr:               'entry.1011393997',
     advocacy_method:            'entry.1276548255',
     primary_cause:              'entry.1638700094',
     singapore_vision:           'entry.272963326',
     landmark:                   'entry.90584085',
+    view_change:                'entry.1877724165',
     pledge_actions:             'entry.818603826',
     pledge_other:               'entry.1434375857',
     primary_archetype:          'entry.1051711614',
@@ -61,7 +27,6 @@ const FORM_CONFIG = {
   }
 };
 
-// ---- ARCHETYPES --------------------------------------------------------------
 const ARCHETYPES = {
   sirAnimalot: {
     name: 'Sir Animalot',
@@ -93,100 +58,145 @@ const ARCHETYPES = {
   },
 };
 
-// Tie-breaker: first key in this list wins when percentages are equal
-const TIE_BREAKER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
+const SLUG_MAP = {
+  sirAnimalot: 'sir-animalot',
+  drEnvironlove: 'dr-environlove',
+  captainSustainables: 'captain-sustainables',
+  warriorOfTheWild: 'warrior-of-the-wild',
+};
 
-// ---- QUESTIONS ---------------------------------------------------------------
-// To add a question: push a new object into this array following the same shape.
-// To change scoring: edit the scores object inside each option.
+// Q9 pledge tiebreaker mapping
+const PLEDGE_TIEBREAKER = {
+  0: 'warriorOfTheWild',    // cruelty-free & wildlife-friendly
+  1: 'sirAnimalot',         // keep pet on leash
+  2: 'captainSustainables', // reduce carbon footprint
+  3: 'drEnvironlove',       // join beach clean-up
+  // index 4 = Other, no scoring
+};
+
 const QUESTIONS = [
+  // Q1 — not scored, stored as injured_bird
   {
-    text: 'You spot an injured bird in the park. What do you do?',
+    text: 'Before Wildlife Carnival, when you show up for work and go about your day, how closely tied do you feel to protecting the environment?',
     type: 'single',
-    formField: 'q1',
+    formField: 'injured_bird',
+    scored: false,
     options: [
-      { text: 'Call a wildlife rescue hotline immediately',  scores: { sirAnimalot: 3 } },
-      { text: 'Research the species and proper care online', scores: { drEnvironlove: 3 } },
-      { text: 'Organise a community response to help',       scores: { captainSustainables: 3 } },
-      { text: 'Stay with it and protect it from harm',       scores: { warriorOfTheWild: 3 } },
+      { text: 'Not connected at all — my daily tasks have nothing to do with "green" work.' },
+      { text: 'A little — there\'s an occasional overlap, but it\'s rare.' },
+      { text: 'Quite — I often see where my skills can cross over.' },
+      { text: 'Very — my daily tasks and skills directly impact sustainability.' },
+      { text: 'Extremely so — my day-to-day work is fundamentally green.' },
     ],
   },
+  // Q2 — scored, stored as dream_activity
   {
-    text: 'Your dream weekend activity is...',
+    text: 'Your company/school wants to launch a new green initiative. What role would you naturally take?',
     type: 'single',
-    formField: 'q2',
+    formField: 'dream_activity',
+    scored: true,
     options: [
-      { text: 'Volunteering at an animal shelter',           scores: { sirAnimalot: 3 } },
-      { text: 'Attending an environmental science workshop', scores: { drEnvironlove: 3 } },
-      { text: 'Leading a neighbourhood clean-up drive',      scores: { captainSustainables: 3 } },
-      { text: 'Hiking and documenting local wildlife',       scores: { warriorOfTheWild: 3 } },
+      { text: 'I would help turn the idea into a practical plan, finding pragmatic ways to reduce waste, save resources, and make the initiative a part of daily routines.', scores: { captainSustainables: 1 } },
+      { text: 'I would speak up directly, advocating for others to support wildlife, protect green spaces, or take action for a green cause.', scores: { warriorOfTheWild: 1 } },
+      { text: 'I would research the issue and share relevant environmental facts with people so they understand why the initiative matters.', scores: { drEnvironlove: 1 } },
+      { text: 'I would focus on helping animals, whether by supporting rescues, protecting local wildlife, or encouraging more animal-friendly choices.', scores: { sirAnimalot: 1 } },
     ],
   },
+  // Q3 — scored, stored as litter_in_nr
   {
-    text: 'When you see litter in a nature reserve, you...',
+    text: 'You have a free Saturday afternoon in Singapore. What would you prefer doing?',
     type: 'single',
-    formField: 'q3',
+    formField: 'litter_in_nr',
+    scored: true,
     options: [
-      { text: 'Pick it up and comfort any animals affected', scores: { sirAnimalot: 2, warriorOfTheWild: 1 } },
-      { text: 'Document it and report to authorities',       scores: { drEnvironlove: 2, captainSustainables: 1 } },
-      { text: 'Organise a clean-up event',                   scores: { captainSustainables: 2, drEnvironlove: 1 } },
-      { text: 'Immediately clean it up yourself',            scores: { warriorOfTheWild: 2, sirAnimalot: 1 } },
+      { text: 'Exploring the eco-architecture and climate tech systems at Gardens by the Bay.', scores: { captainSustainables: 1 } },
+      { text: 'Tracking rare species or birdwatching at Sungei Buloh Wetland Reserve.', scores: { warriorOfTheWild: 1 } },
+      { text: 'Attending a local botany workshop or checking out a community urban farm.', scores: { drEnvironlove: 1 } },
+      { text: 'Volunteering at an animal shelter, or visiting a cat/dog cafe to show love to vulnerable creatures.', scores: { sirAnimalot: 1 } },
     ],
   },
+  // Q4 — multi, scored, stored as advocacy_method
   {
-    text: 'How do you prefer to advocate for the environment?',
-    type: 'single',
+    text: 'You notice a displaced, disoriented animal wandering near traffic. What is your immediate instinct?',
+    type: 'multi',
     formField: 'advocacy_method',
+    scored: true,
+    hasAllOption: true,
     options: [
-      { text: 'Through caring for animals directly',         scores: { sirAnimalot: 3 } },
-      { text: 'Through education and research',              scores: { drEnvironlove: 3 } },
-      { text: 'Through community programs and policy',       scores: { captainSustainables: 3 } },
-      { text: 'Through direct action and fieldwork',         scores: { warriorOfTheWild: 3 } },
+      { text: 'I would use my phone to report the location through the proper channels so the right people can respond quickly and safely.', scores: { captainSustainables: 1 } },
+      { text: 'I would stay in the vicinity, ensuring the animal\'s safety.', scores: { warriorOfTheWild: 1 } },
+      { text: 'I would observe carefully, note what kind of animal it is, and try to understand what may have caused it to end up there.', scores: { drEnvironlove: 1 } },
+      { text: 'I would immediately contact an animal or wildlife rescue group and stay nearby, from a safe distance, until help arrives.', scores: { sirAnimalot: 1 } },
+      { text: 'All of the above', isAll: true, scores: { captainSustainables: 1, warriorOfTheWild: 1, drEnvironlove: 1, sirAnimalot: 1 } },
     ],
   },
+  // Q5 — multi, scored, stored as primary_cause
   {
-    text: 'Which cause resonates most with you?',
-    type: 'single',
+    text: "When you think about Singapore evolving into a true 'City in Nature', what matters most to you?",
+    type: 'multi',
     formField: 'primary_cause',
+    scored: true,
+    hasAllOption: true,
     options: [
-      { text: 'Animal welfare and rescue',                   scores: { sirAnimalot: 3 } },
-      { text: 'Climate science and research',                scores: { drEnvironlove: 3 } },
-      { text: 'Sustainable living and green cities',         scores: { captainSustainables: 3 } },
-      { text: 'Biodiversity and habitat protection',         scores: { warriorOfTheWild: 3 } },
+      { text: 'A city where everyday systems are greener, from transport and buildings to waste, energy, and how businesses operate.', scores: { captainSustainables: 1 } },
+      { text: 'A city where nature has real space to thrive, with connected green areas that protect wildlife and reduce conflict between people and animals.', scores: { warriorOfTheWild: 1 } },
+      { text: 'A city with healthier ecosystems, cleaner air and water, stronger native plants, and natural spaces that are cared for and restored.', scores: { drEnvironlove: 1 } },
+      { text: 'A kinder city where pets, stray animals, and urban wildlife are treated with care, safety, and respect.', scores: { sirAnimalot: 1 } },
+      { text: 'All of the above', isAll: true, scores: { captainSustainables: 1, warriorOfTheWild: 1, drEnvironlove: 1, sirAnimalot: 1 } },
     ],
   },
+  // Q6 — scored, stored as singapore_vision
   {
-    text: "What's your vision for Singapore's future?",
+    text: 'If you could have one superpower to help the planet, which would you pick?',
     type: 'single',
     formField: 'singapore_vision',
+    scored: true,
     options: [
-      { text: 'A city where every animal is protected',      scores: { sirAnimalot: 2, drEnvironlove: 1 } },
-      { text: 'A hub for environmental innovation',          scores: { drEnvironlove: 2, captainSustainables: 1 } },
-      { text: 'A model of sustainable urban living',         scores: { captainSustainables: 2, warriorOfTheWild: 1 } },
-      { text: 'A green corridor for wildlife',               scores: { warriorOfTheWild: 2, sirAnimalot: 1 } },
+      { text: 'The power to make everyday life instantly greener — less waste, clean energy, zero emissions, and better habits.', scores: { captainSustainables: 1 } },
+      { text: 'The power to protect wild flora and fauna with an invisible shield, keeping wild endangered species safe from harm.', scores: { warriorOfTheWild: 1 } },
+      { text: 'The power to heal nature — bring dead soil back to life, clean all polluted water, and help ecosystems thrive.', scores: { drEnvironlove: 1 } },
+      { text: 'The capability to understand exactly what individual animals need, and the ability to ensure that no single creature suffers.', scores: { sirAnimalot: 1 } },
     ],
   },
+  // Q7 — scored, stored as landmark
   {
-    text: 'Which Singapore landmark inspires you most?',
+    text: 'You are trying to convince your friends to care about the environment. What would you say?',
     type: 'single',
     formField: 'landmark',
+    scored: true,
     options: [
-      { text: 'Singapore Zoo',                               scores: { sirAnimalot: 3 } },
-      { text: 'Science Centre',                              scores: { drEnvironlove: 3 } },
-      { text: 'Gardens by the Bay',                          scores: { captainSustainables: 3 } },
-      { text: 'Sungei Buloh Wetland Reserve',                scores: { warriorOfTheWild: 3 } },
+      { text: '"Sustainability is practical, smart, and creates the jobs of the future. It\'s a just and good strategy."', scores: { captainSustainables: 1 } },
+      { text: '"We\'re not the only ones living here. Singapore has amazing wildlife, and they deserve space to survive."', scores: { warriorOfTheWild: 1 } },
+      { text: '"Nature is connected to everything — our air, water, food, weather, and health. If we damage it too much, it affects all of us."', scores: { drEnvironlove: 1 } },
+      { text: '"Animals can\'t always protect themselves. Caring for the environment means looking out for the creatures that depend on it."', scores: { sirAnimalot: 1 } },
     ],
   },
+  // Q8 — not scored for archetype, stored as view_change
   {
-    text: 'I pledge to... (select all that apply)',
+    text: "Now that you've discovered your archetype, how has your view on 'green skills' changed?",
+    type: 'single',
+    formField: 'view_change',
+    scored: false,
+    options: [
+      { text: 'No change — I still feel environmental action is best left to the specialized scientists and experts.' },
+      { text: 'Slight shift — I see how individual actions like recycling matter, but I don\'t think it connects deeply to my regular professional life.' },
+      { text: 'Strategy — I realize that my professional skills can actively build systems that protect the planet.' },
+      { text: 'Advocacy — I realize that my voice, choices, and everyday boundary-setting can protect local species.' },
+      { text: 'Action — I realize that my direct actions, scientific curiosity, or community efforts can directly heal ecosystems and save lives.' },
+    ],
+  },
+  // Q9 — pledge, multi, stored as pledge_actions / pledge_other
+  {
+    text: 'As an eco-warrior, I pledge to... (select all that apply)',
     type: 'multi',
     formField: 'pledge_actions',
+    scored: false,
     options: [
-      { text: 'Adopt or foster an animal',                   scores: { sirAnimalot: 2 } },
-      { text: 'Reduce my carbon footprint',                  scores: { drEnvironlove: 2 } },
-      { text: 'Join a community green initiative',           scores: { captainSustainables: 2 } },
-      { text: 'Protect local wildlife habitats',             scores: { warriorOfTheWild: 2 } },
-      { text: 'Other (please specify)',                      scores: {}, isOther: true },
+      { text: 'Choose cruelty-free & wildlife-friendly products' },
+      { text: 'Keep my pet on a leash in nature areas' },
+      { text: 'Reduce my carbon footprint' },
+      { text: 'Join a beach clean-up' },
+      { text: 'Other (please specify)', isOther: true },
     ],
   },
 ];
@@ -195,7 +205,7 @@ const QUESTIONS = [
 // STATE
 // =============================================================================
 let currentQ = 0;
-const answers = new Array(QUESTIONS.length).fill(null); // index (single) or [] (multi)
+const answers = new Array(QUESTIONS.length).fill(null);
 let otherText = '';
 
 // =============================================================================
@@ -287,19 +297,31 @@ function renderSingleOptions(q) {
 function renderMultiOptions(q) {
   elOptionsMulti.innerHTML = '';
   const saved = answers[currentQ] || [];
+  const allIdx = q.hasAllOption ? q.options.findIndex(o => o.isAll) : -1;
+  const allSelected = allIdx !== -1 && saved.includes(allIdx);
+
+  const checkboxes = [];
+  const labels = [];
 
   q.options.forEach((opt, i) => {
     const label = document.createElement('label');
-    label.className = 'option-check-label' + (saved.includes(i) ? ' selected' : '');
+    const isRegular = allIdx !== -1 && !opt.isAll && !opt.isOther;
+    const forcedByAll = allSelected && isRegular;
+    label.className = 'option-check-label'
+      + (saved.includes(i) || forcedByAll ? ' selected' : '')
+      + (forcedByAll ? ' disabled' : '');
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
-    cb.checked = saved.includes(i);
+    cb.checked = saved.includes(i) || forcedByAll;
+    if (forcedByAll) cb.disabled = true;
 
     const span = document.createElement('span');
     span.textContent = opt.text;
     label.append(cb, span);
     elOptionsMulti.appendChild(label);
+    checkboxes.push(cb);
+    labels.push(label);
 
     if (opt.isOther) {
       const input = document.createElement('input');
@@ -308,17 +330,36 @@ function renderMultiOptions(q) {
       input.placeholder = 'Please specify...';
       input.maxLength = 50;
       input.value = otherText;
-      input.addEventListener('input', e => { otherText = e.target.value.trim().slice(0, 50); });
+      input.addEventListener('input', e => { otherText = e.target.value.trim().slice(0, 50); updateNextBtn(); });
       elOptionsMulti.appendChild(input);
-
       cb.addEventListener('change', () => input.classList.toggle('hidden', !cb.checked));
     }
 
     cb.addEventListener('change', () => {
+      if (opt.isAll) {
+        // Toggle all regular options
+        const nowChecked = cb.checked;
+        checkboxes.forEach((ocb, j) => {
+          const isReg = allIdx !== -1 && !q.options[j].isAll && !q.options[j].isOther;
+          if (isReg) {
+            ocb.checked = nowChecked;
+            ocb.disabled = nowChecked;
+            labels[j].classList.toggle('selected', nowChecked);
+            labels[j].classList.toggle('disabled', nowChecked);
+          }
+        });
+      }
       label.classList.toggle('selected', cb.checked);
-      const current = answers[currentQ] ? [...answers[currentQ]] : [];
-      if (cb.checked) { if (!current.includes(i)) current.push(i); }
-      else { const idx = current.indexOf(i); if (idx > -1) current.splice(idx, 1); }
+      // Rebuild answers from current checkbox states, excluding force-disabled regular ones when All is checked
+      const allCb = allIdx !== -1 ? checkboxes[allIdx] : null;
+      const allNowChecked = allCb && allCb.checked;
+      const current = [];
+      checkboxes.forEach((ocb, j) => {
+        const isReg = allIdx !== -1 && !q.options[j].isAll && !q.options[j].isOther;
+        if (allNowChecked && isReg) return; // don't store individual indices when All is checked
+        if (ocb.checked) current.push(j);
+      });
+      if (allNowChecked) current.push(allIdx);
       answers[currentQ] = current;
       updateNextBtn();
     });
@@ -330,62 +371,140 @@ function updateNextBtn() {
   if (q.type === 'single') {
     elBtnNext.disabled = answers[currentQ] === null;
   } else {
-    // multi: require at least one selection
-    elBtnNext.disabled = !answers[currentQ] || answers[currentQ].length === 0;
+    const sel = answers[currentQ] || [];
+    if (sel.length === 0) { elBtnNext.disabled = true; return; }
+    // If this question has an Other option and it is selected, require non-blank text
+    const otherIdx = q.options.findIndex(o => o.isOther);
+    if (otherIdx !== -1 && sel.includes(otherIdx) && otherText.trim() === '') {
+      elBtnNext.disabled = true; return;
+    }
+    elBtnNext.disabled = false;
   }
 }
 
 // =============================================================================
-// SCORING
+// SCORING — Q2 through Q7 only
 // =============================================================================
 function calcScores() {
   const scores = { sirAnimalot: 0, drEnvironlove: 0, captainSustainables: 0, warriorOfTheWild: 0 };
 
   QUESTIONS.forEach((q, qi) => {
+    if (!q.scored) return;
     const ans = answers[qi];
     if (ans === null) return;
-    const indices = q.type === 'single' ? [ans] : ans;
-    indices.forEach(i => {
-      const s = q.options[i].scores;
-      Object.keys(s).forEach(k => { scores[k] = (scores[k] || 0) + s[k]; });
-    });
+
+    if (q.type === 'single') {
+      const s = q.options[ans].scores || {};
+      Object.keys(s).forEach(k => { scores[k] += s[k]; });
+    } else if (q.type === 'multi') {
+      const indices = ans;
+      const allIdx = q.options.findIndex(o => o.isAll);
+      const hasAll = allIdx !== -1 && indices.includes(allIdx);
+
+      if (hasAll) {
+        // "All of the above" — add its scores once, ignore individual selections
+        const s = q.options[allIdx].scores || {};
+        Object.keys(s).forEach(k => { scores[k] += s[k]; });
+      } else {
+        indices.forEach(i => {
+          const s = q.options[i].scores || {};
+          Object.keys(s).forEach(k => { scores[k] += s[k]; });
+        });
+      }
+    }
   });
 
+  return scores;
+}
+
+function calcPcts(scores) {
   const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
   const pcts = {};
   Object.keys(scores).forEach(k => { pcts[k] = Math.round(scores[k] / total * 100); });
+  return pcts;
+}
 
-  // Sort by percentage, using tie-breaker order for equal values
-  const ranked = Object.keys(scores).sort((a, b) => {
-    if (pcts[b] !== pcts[a]) return pcts[b] - pcts[a];
-    return TIE_BREAKER.indexOf(a) - TIE_BREAKER.indexOf(b);
+function findTiedTopKeys(scores) {
+  const max = Math.max(...Object.values(scores));
+  return Object.keys(scores).filter(k => scores[k] === max);
+}
+
+function applyQ9Tiebreaker(scores, tiedKeys) {
+  const q9idx = QUESTIONS.findIndex(q => q.formField === 'pledge_actions');
+  const q9ans = answers[q9idx] || [];
+  const q9 = QUESTIONS[q9idx];
+
+  const broken = { ...scores };
+  q9ans.forEach(i => {
+    const archetype = PLEDGE_TIEBREAKER[i];
+    if (archetype && tiedKeys.includes(archetype)) {
+      broken[archetype] += 1;
+    }
   });
-
-  return { scores, pcts, primary: ranked[0], secondary: ranked[1] };
+  return broken;
 }
 
 // =============================================================================
 // RESULT PAGE
 // =============================================================================
 function showResult() {
-  const { scores, pcts, primary, secondary } = calcScores();
-  const p = ARCHETYPES[primary];
-  const s = ARCHETYPES[secondary];
+  let scores = calcScores();
+  let tiedKeys = findTiedTopKeys(scores);
 
-  document.getElementById('result-icon').textContent = p.icon;
-  document.getElementById('result-title').textContent = p.name;
-  document.getElementById('result-desc').textContent = p.description;
-  document.getElementById('secondary-name').textContent = `${s.icon} ${s.name}`;
+  // Apply Q9 tiebreaker only if there's a tie
+  if (tiedKeys.length > 1) {
+    scores = applyQ9Tiebreaker(scores, tiedKeys);
+    tiedKeys = findTiedTopKeys(scores);
+  }
 
-  // Score bars — render in fixed display order
+  const pcts = calcPcts(scores);
+
+  // Determine primary archetypes (may be multiple if still tied)
+  const primaryKeys = tiedKeys;
+
+  // Secondary: only shown when there is exactly one primary
+  const secondaryKey = primaryKeys.length === 1
+    ? Object.keys(scores).filter(k => !primaryKeys.includes(k)).sort((a, b) => scores[b] - scores[a])[0]
+    : null;
+
+  // Result display
+  const firstPrimary = ARCHETYPES[primaryKeys[0]];
+  const secondary = ARCHETYPES[secondaryKey];
+
+  if (primaryKeys.length === 1) {
+    document.getElementById('result-icon').textContent = firstPrimary.icon;
+    document.getElementById('result-title').textContent = firstPrimary.name;
+    document.getElementById('result-desc').textContent = firstPrimary.description;
+    document.getElementById('result-multi-block').classList.add('hidden');
+    document.getElementById('result-single-block').classList.remove('hidden');
+  } else {
+    // Multiple tied archetypes
+    document.getElementById('result-single-block').classList.add('hidden');
+    const multiBlock = document.getElementById('result-multi-block');
+    multiBlock.classList.remove('hidden');
+    multiBlock.querySelector('.result-multi-list').innerHTML = primaryKeys.map(k =>
+      `<div class="result-multi-item"><span class="result-multi-icon">${ARCHETYPES[k].icon}</span><span class="result-multi-name">${ARCHETYPES[k].name}</span></div>`
+    ).join('');
+    document.getElementById('result-icon').textContent = '';
+  }
+
+  if (secondary) {
+    document.getElementById('secondary-name').textContent = `${secondary.icon} ${secondary.name}`;
+    document.getElementById('secondary-block').classList.remove('hidden');
+  } else {
+    document.getElementById('secondary-block').classList.add('hidden');
+  }
+
+  // Score bars
   const displayOrder = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
   const barsEl = document.getElementById('score-bars');
   barsEl.innerHTML = '';
   displayOrder.forEach(key => {
     const arch = ARCHETYPES[key];
     const pct = pcts[key];
+    const isPrimary = primaryKeys.includes(key);
     const row = document.createElement('div');
-    row.className = 'score-row' + (key === primary ? ' primary' : '');
+    row.className = 'score-row' + (isPrimary ? ' primary' : '');
     row.innerHTML = `
       <div class="score-row-header">
         <span class="score-name">${arch.icon} ${arch.name}</span>
@@ -395,7 +514,6 @@ function showResult() {
         <div class="score-bar-fill" style="width:0%"></div>
       </div>`;
     barsEl.appendChild(row);
-    // Animate bar after paint
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         row.querySelector('.score-bar-fill').style.width = pct + '%';
@@ -405,17 +523,12 @@ function showResult() {
 
   showPage('result');
 
-  // Set Explore Archetypes link with highlight parameter
-  const slugMap = {
-    sirAnimalot: 'sir-animalot',
-    drEnvironlove: 'dr-environlove',
-    captainSustainables: 'captain-sustainables',
-    warriorOfTheWild: 'warrior-of-the-wild',
-  };
-  document.getElementById('btn-explore').href = `archetypes.html?highlight=${slugMap[primary]}`;
+  // Explore Archetypes link — pass all primary slugs
+  const slugs = primaryKeys.map(k => SLUG_MAP[k]).join(',');
+  document.getElementById('btn-explore').href = `archetypes.html?highlight=${slugs}`;
 
-  saveToHistory(primary, pcts);
-  submitToGoogleForm(scores, pcts, primary, secondary);
+  saveToHistory(primaryKeys[0], pcts);
+  submitToGoogleForm(scores, pcts, primaryKeys, secondaryKey);
 }
 
 // =============================================================================
@@ -433,15 +546,13 @@ function saveToHistory(primary, pcts) {
 // =============================================================================
 // GOOGLE FORM SUBMISSION
 // =============================================================================
-function submitToGoogleForm(scores, pcts, primary, secondary) {
-  // Generate anonymous submission ID (timestamp + random string)
+function submitToGoogleForm(scores, pcts, primaryKeys, secondaryKey) {
   const submissionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Build field → value map
   const data = {
     [FORM_CONFIG.fields.participant_id]:             submissionId,
-    [FORM_CONFIG.fields.primary_archetype]:          ARCHETYPES[primary].name,
-    [FORM_CONFIG.fields.secondary_archetype]:        ARCHETYPES[secondary].name,
+    [FORM_CONFIG.fields.primary_archetype]:          primaryKeys.map(k => ARCHETYPES[k].name).join(', '),
+    [FORM_CONFIG.fields.secondary_archetype]:        secondaryKey ? ARCHETYPES[secondaryKey].name : '',
     [FORM_CONFIG.fields.sir_animalot_score]:         scores.sirAnimalot,
     [FORM_CONFIG.fields.dr_environlove_score]:       scores.drEnvironlove,
     [FORM_CONFIG.fields.captain_sustainables_score]: scores.captainSustainables,
@@ -452,35 +563,46 @@ function submitToGoogleForm(scores, pcts, primary, secondary) {
     [FORM_CONFIG.fields.warrior_wild_pct]:           pcts.warriorOfTheWild,
   };
 
-  // Map each question's answer text to its form field
-  const fieldMap = {
-    q1: 'q1', q2: 'q2', q3: 'q3',
-    advocacy_method: 'advocacy_method',
-    primary_cause: 'primary_cause',
-    singapore_vision: 'singapore_vision',
-    landmark: 'landmark',
-  };
+  // Single-select questions mapped to their form fields
   QUESTIONS.forEach((q, qi) => {
-    if (q.type === 'single' && fieldMap[q.formField] && answers[qi] !== null) {
+    if (q.type === 'single' && FORM_CONFIG.fields[q.formField] && answers[qi] !== null) {
       data[FORM_CONFIG.fields[q.formField]] = q.options[answers[qi]].text;
     }
   });
 
-  // Pledge multi-select
-  const pledgeQ = QUESTIONS.find(q => q.formField === 'pledge_actions');
-  const pledgeAns = answers[QUESTIONS.indexOf(pledgeQ)] || [];
+  // Q4 and Q5 multi-select — if All is selected, submit only "All of the above"
+  [3, 4].forEach(qi => {
+    const q = QUESTIONS[qi];
+    const ans = answers[qi] || [];
+    const allIdx = q.options.findIndex(o => o.isAll);
+    const hasAll = allIdx !== -1 && ans.includes(allIdx);
+    data[FORM_CONFIG.fields[q.formField]] = hasAll
+      ? q.options[allIdx].text
+      : ans.map(i => q.options[i].text).join(', ');
+  });
+
+  // Q9 pledge
+  const pledgeQIdx = QUESTIONS.findIndex(q => q.formField === 'pledge_actions');
+  const pledgeQ = QUESTIONS[pledgeQIdx];
+  const pledgeAns = answers[pledgeQIdx] || [];
   const pledgeTexts = pledgeAns
     .filter(i => !pledgeQ.options[i].isOther)
     .map(i => pledgeQ.options[i].text);
   data[FORM_CONFIG.fields.pledge_actions] = pledgeTexts.join(', ');
-  data[FORM_CONFIG.fields.pledge_other]   = otherText;
+  data[FORM_CONFIG.fields.pledge_other] = pledgeAns.some(i => pledgeQ.options[i].isOther) ? otherText : '';
+
+  // Q8 — submit raw answer text to view_change
+  const q8idx = QUESTIONS.findIndex(q => q.formField === 'view_change');
+  const q8ans = answers[q8idx];
+  if (q8ans !== null) {
+    data[FORM_CONFIG.fields.view_change] = QUESTIONS[q8idx].options[q8ans].text;
+  }
 
   if (TEST_MODE) {
     showTestModal(data);
     return;
   }
 
-  // Build and submit hidden form
   const form = document.getElementById('google-form');
   form.action = FORM_CONFIG.formUrl;
   form.innerHTML = '';
@@ -508,5 +630,4 @@ document.getElementById('test-modal-close').addEventListener('click', () => {
   document.getElementById('test-modal').classList.add('hidden');
 });
 
-// Show test banner on load if TEST_MODE is on
 if (TEST_MODE) document.getElementById('test-banner').classList.remove('hidden');
