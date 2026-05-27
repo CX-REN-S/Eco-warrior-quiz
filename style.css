@@ -641,13 +641,16 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 .site-nav { overflow: visible; }
 @media (max-width: 640px) {
   .site-nav {
-    padding: 0 0 0 8px; /* logo gets left padding; right edge left bare for Contact btn */
+    padding: 0 0 0 8px;
     gap: 0;
-    overflow: hidden; /* clip the scroll-fade pseudo-element */
+    /* Must stay overflow:visible so the contact dropdown isn't clipped. */
+    overflow: visible;
   }
   .nav-ark-logo { padding: 4px 4px; flex-shrink: 0; }
 
-  /* Scroll container for the three page tabs */
+  /* Scroll container for the three page tabs.
+     overflow:hidden here only clips the .nav-links box itself, not the
+     sibling .nav-contact-wrap, so the dropdown remains unclipped. */
   .nav-links {
     flex: 1;
     flex-wrap: nowrap;
@@ -656,9 +659,8 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
     overflow-y: visible;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;      /* Firefox */
+    scrollbar-width: none;
     position: relative;
-    /* Right-edge fade hints at hidden content */
     -webkit-mask-image: linear-gradient(to right, black 70%, transparent 100%);
     mask-image:         linear-gradient(to right, black 70%, transparent 100%);
   }
@@ -667,12 +669,23 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   .nav-links a {
     padding: 14px clamp(10px, 3.5vw, 16px);
     font-size: 0.82rem;
-    flex-shrink: 0; /* never squish individual tabs */
+    flex-shrink: 0;
   }
 
   /* Contact button — fixed size, no flex shrink */
-  .nav-contact-wrap { flex-shrink: 0; padding-right: 8px; }
-  .nav-contact-btn  { font-size: 0.78rem; padding: 8px 10px; }
+  .nav-contact-wrap {
+    flex-shrink: 0;
+    padding-right: 8px;
+    /* Own stacking context so the dropdown floats above page content */
+    position: relative;
+    z-index: 200;
+  }
+  .nav-contact-btn { font-size: 0.78rem; padding: 8px 10px; }
+
+  /* Dropdown: raise above the sticky nav's z-index (100) and page cards */
+  .nav-contact-dropdown {
+    z-index: 400;
+  }
 }
 
 /* Stacked arch sections on mobile (below 1024px) */
