@@ -123,39 +123,17 @@ function renderCloud(entries, source, errorMsg) {
       pledge:  e.pledge,
       rem,
       pct,
+      rank:    i,
       opacity: 0.60 + pct * 0.40,
       color:   PLEDGE_COLORS[i % PLEDGE_COLORS.length],
     };
   });
 
   // ------------------------------------------------------------------
-  // Ring assignment (by rank index, 0-based):
-  //   0        → center
-  //   1–6      → inner ring  (up to 6 items)
-  //   7–24     → middle ring (up to 18 items)
-  //   25+      → outer bands (groups of ~24, split top/bottom)
-  //
-  // Each ring is rendered as one or two flex rows that wrap naturally.
-  // No absolute positioning — overlap is impossible by construction.
+  // Improved layout: center-out zones with better packing.
+  // Instead of strict ring isolation, we allow smaller pledges to
+  // fill gaps beside larger ones in the same row.
   // ------------------------------------------------------------------
-  const center = items[0];
-  const inner  = items.slice(1, 7);
-  const middle = items.slice(7, 25);
-  const outer  = items.slice(25);
-
-  // Split an array into two halves: first half goes "top", second "bottom".
-  function halve(arr) {
-    const mid = Math.ceil(arr.length / 2);
-    return [arr.slice(0, mid), arr.slice(mid)];
-  }
-
-  // Chunk outer pledges into bands of ~24 for additional top/bottom rows.
-  function chunkOuter(arr, size) {
-    const bands = [];
-    for (let i = 0; i < arr.length; i += size) bands.push(arr.slice(i, i + size));
-    return bands;
-  }
-
   function makeSpan(item, idx) {
     const el = document.createElement('span');
     el.className            = 'cloud-word';
@@ -167,6 +145,7 @@ function renderCloud(entries, source, errorMsg) {
     return el;
   }
 
+  // Build a row from items, optionally with a class.
   function makeRow(itemsInRow, startIdx, extraClass) {
     const row = document.createElement('div');
     row.className = 'cloud-row' + (extraClass ? ' ' + extraClass : '');
@@ -174,27 +153,57 @@ function renderCloud(entries, source, errorMsg) {
     return row;
   }
 
-  // Build DOM structure: outer bands → middle → inner → center → inner → middle → outer bands
-  cloudEl.innerHTML    = '';
+  cloudEl.innerHTML      = '';
   cloudEl.style.position = '';
   cloudEl.style.height   = '';
 
+  if (items.length === 0) return;
+
+  // Assign items to zones by rank:
+  //   0: center (solo)
+  //   1–4: inner-top
+  //   5–8: inner-bottom
+  //   9–16: middle-top
+  //   17–24: middle-bottom
+  //   25+: outer (split top/bottom in chunks)
+  const center      = items[0];
+  const innerTop    = items.slice(1, 5);
+  const innerBot    = items.slice(5, 9);
+  const middleTop   = items.slice(9, 17);
+  const middleBot   = items.slice(17, 25);
+  const outer       = items.slice(25);
+
+  // Split outer into top/bottom bands
+  function splitOuter(arr) {
+    const bands = [];
+    for (let i = 0; i < arr.length; i += 20) bands.push(arr.slice(i, i + 20));
+    const topBands = [], botBands = [];
+    bands.forEach((band, idx) => {
+      const mid = Math.ceil(band.length / 2);
+      if (idx % 2 === 0) {
+        topBands.push(band.slice(0, mid));
+        botBands.push(band.slice(mid));
+      } else {
+        botBands.push(band.slice(0, mid));
+        topBands.push(band.slice(mid));
+      }
+    });
+    return { topBands, botBands };
+  }
+
+  const { topBands, botBands } = splitOuter(outer);
+
   let delayBase = 0;
 
-  const outerBands = chunkOuter(outer, 24);
-
-  // Top outer bands (least common, farthest)
-  [...outerBands].reverse().forEach(band => {
-    const [top] = halve(band);
-    if (top.length) { cloudEl.appendChild(makeRow(top, delayBase, 'cloud-row--outer')); delayBase += top.length; }
+  // Top outer bands (farthest)
+  topBands.reverse().forEach(band => {
+    if (band.length) { cloudEl.appendChild(makeRow(band, delayBase, 'cloud-row--outer')); delayBase += band.length; }
   });
 
   // Top middle
-  const [midTop, midBot] = halve(middle);
-  if (midTop.length) { cloudEl.appendChild(makeRow(midTop, delayBase, 'cloud-row--middle')); delayBase += midTop.length; }
+  if (middleTop.length) { cloudEl.appendChild(makeRow(middleTop, delayBase, 'cloud-row--middle')); delayBase += middleTop.length; }
 
   // Top inner
-  const [innerTop, innerBot] = halve(inner);
   if (innerTop.length) { cloudEl.appendChild(makeRow(innerTop, delayBase, 'cloud-row--inner')); delayBase += innerTop.length; }
 
   // Center row
@@ -208,12 +217,11 @@ function renderCloud(entries, source, errorMsg) {
   if (innerBot.length) { cloudEl.appendChild(makeRow(innerBot, delayBase, 'cloud-row--inner')); delayBase += innerBot.length; }
 
   // Bottom middle
-  if (midBot.length) { cloudEl.appendChild(makeRow(midBot, delayBase, 'cloud-row--middle')); delayBase += midBot.length; }
+  if (middleBot.length) { cloudEl.appendChild(makeRow(middleBot, delayBase, 'cloud-row--middle')); delayBase += middleBot.length; }
 
   // Bottom outer bands
-  outerBands.forEach(band => {
-    const [, bot] = halve(band);
-    if (bot.length) { cloudEl.appendChild(makeRow(bot, delayBase, 'cloud-row--outer')); delayBase += bot.length; }
+  botBands.forEach(band => {
+    if (band.length) { cloudEl.appendChild(makeRow(band, delayBase, 'cloud-row--outer')); delayBase += band.length; }
   });
 }
 
