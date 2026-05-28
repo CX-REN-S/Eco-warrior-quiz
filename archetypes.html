@@ -15,7 +15,7 @@
     <img src="assets/ARK_white_transparent_header.png" alt="ARK Initiative" class="ark-logo">
   </a>
   <div class="nav-links">
-    <a href="index.html">Personality Test</a>
+    <a href="index.html">Profile Test</a>
     <a href="archetypes.html" class="active">Archetypes</a>
     <a href="live-results.html">Live Results</a>
   </div>
@@ -64,8 +64,14 @@
 
 <script src="archetypes.js"></script>
 <script>
+try {
 const ORDER = ['captainSustainables', 'warriorOfTheWild', 'drEnvironlove', 'sirAnimalot'];
 const container = document.getElementById('arch-sections');
+
+if (!container) {
+  console.error('Container #arch-sections not found');
+  throw new Error('Container not found');
+}
 
 const params = new URLSearchParams(window.location.search);
 const highlightParam = params.get('highlight') || '';
@@ -82,6 +88,10 @@ const hasHighlight = highlightKeys.size > 0;
 
 ORDER.forEach((key, i) => {
   const a = ARCHETYPES_CONTENT[key];
+  if (!a) {
+    console.error('Archetype not found:', key);
+    return;
+  }
   const flip = i % 2 === 1;
   const isHighlighted = highlightKeys.has(key);
 
@@ -92,10 +102,7 @@ ORDER.forEach((key, i) => {
   section.innerHTML = `
     <div class="arch-section-visual">
       <div class="arch-visual-panel" style="--accent: ${a.accentColor}">
-        <img src="${a.image}" alt="${a.imageAlt}" class="arch-img" onerror="this.style.display='none'">
-        <div class="arch-visual-fallback">
-          <span class="arch-visual-icon">${a.icon}</span>
-        </div>
+        <img src="${a.sceneImage}" alt="${a.imageAlt}" class="arch-scene-img" onerror="this.style.display='none'">
       </div>
     </div>
     <div class="arch-section-text">
@@ -111,10 +118,6 @@ ORDER.forEach((key, i) => {
       <div class="arch-impact">
         <p class="arch-meta-label">How you make an impact</p>
         <p class="arch-impact-text">${a.impact}</p>
-      </div>
-      <div class="arch-next">
-        <span class="arch-next-label">Try this →</span>
-        <span class="arch-next-text">${a.nextStep}</span>
       </div>
     </div>`;
 
@@ -142,36 +145,69 @@ if (hasHighlight) {
     }, 120);
   }
 } else {
-  // ---- Normal browse mode: fade sections in on scroll ----
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('arch-visible');
-        observer.unobserve(entry.target);
-      }
+  // ---- Normal browse mode: sections visible by default, fade-in as enhancement ----
+  // Only add fade-in if IntersectionObserver is supported
+  if ('IntersectionObserver' in window) {
+    // Add fade-ready class to enable fade-in animation
+    container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
+      el.classList.add('arch-fade-ready');
     });
-  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-  container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
-    observer.observe(el);
-  });
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('arch-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+    container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Fallback: if sections are still hidden after 500ms, reveal them
+    setTimeout(() => {
+      container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
+        if (!el.classList.contains('arch-visible')) {
+          el.classList.add('arch-visible');
+        }
+      });
+    }, 500);
+  }
+  // If IntersectionObserver not supported, sections stay visible (no fade-ready class added)
+}
+
+} catch (error) {
+  console.error('Failed to initialize archetypes page:', error);
+  // Fallback: ensure sections are visible
+  const container = document.getElementById('arch-sections');
+  if (container) {
+    container.querySelectorAll('.arch-section, .arch-divider').forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.display = 'block';
+    });
+  }
 }
 
 // ---- Contact dropdown ----
 const contactBtn = document.getElementById('contact-btn');
 const contactDropdown = document.getElementById('contact-dropdown');
-contactBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  const open = contactDropdown.classList.contains('open');
-  contactDropdown.classList.toggle('open', !open);
-  contactBtn.setAttribute('aria-expanded', String(!open));
-});
-document.addEventListener('click', e => {
-  if (!contactBtn.contains(e.target) && !contactDropdown.contains(e.target)) {
-    contactDropdown.classList.remove('open');
-    contactBtn.setAttribute('aria-expanded', 'false');
-  }
-});
+if (contactBtn && contactDropdown) {
+  contactBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = contactDropdown.classList.contains('open');
+    contactDropdown.classList.toggle('open', !open);
+    contactBtn.setAttribute('aria-expanded', String(!open));
+  });
+  document.addEventListener('click', e => {
+    if (!contactBtn.contains(e.target) && !contactDropdown.contains(e.target)) {
+      contactDropdown.classList.remove('open');
+      contactBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
 </script>
 </body>
 </html>

@@ -169,6 +169,7 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 }
 .landing-card h1 { font-size: clamp(1.35rem, 5vw, 1.75rem); font-weight: 700; color: var(--forest); line-height: 1.25; margin-bottom: 14px; }
 .subtitle { color: var(--text-mid); font-size: 0.97rem; margin-bottom: 12px; }
+.subtitle em { font-style: italic; }
 .tagline { font-size: 0.85rem; color: var(--text-light); margin-bottom: 28px; font-weight: 500; }
 
 /* ---- BUTTONS ------------------------------------------------------------- */
@@ -241,7 +242,8 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 .result-label { font-size: 0.85rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
 .result-title { font-size: clamp(1.35rem, 5vw, 1.7rem); font-weight: 700; color: var(--forest); margin-bottom: 14px; }
 .result-desc { color: var(--text-mid); font-size: 0.97rem; margin-bottom: 18px; line-height: 1.7; }
-.secondary-block { display: inline-block; background: var(--earth-light); border: 1px solid rgba(140,109,63,0.18); border-radius: 50px; padding: 7px 20px; margin-bottom: 28px; font-size: 0.88rem; }
+.secondary-block { display: inline-flex; align-items: center; gap: 6px; background: var(--earth-light); border: 1px solid rgba(140,109,63,0.18); border-radius: 50px; padding: 7px 20px; margin-bottom: 28px; font-size: 0.88rem; }
+.secondary-archetype-icon { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; transform: translateY(2px); }
 .secondary-label { color: var(--earth); font-weight: 600; }
 .secondary-name { color: var(--text-dark); font-weight: 700; }
 
@@ -282,6 +284,34 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 .modal-box pre { background: #f4f1ec; border-radius: var(--radius-sm); padding: 14px; font-size: 0.78rem; overflow: auto; flex: 1; white-space: pre-wrap; word-break: break-all; }
 
 .hidden { display: none !important; }
+
+/* ---- RESULT CHARACTER IMAGE ---------------------------------------------- */
+.result-char-img {
+  display: block;
+  margin: 0 auto 16px;
+  width: 240px;
+  max-width: min(240px, 60vw);
+  object-fit: contain;
+}
+@media (max-width: 430px) {
+  .result-char-img { width: 180px; }
+}
+
+/* Multi-archetype tie: character images */
+.result-multi-char-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+/* Score bar small icons */
+.score-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+}
 
 /* ---- ARCHETYPES PAGE ----------------------------------------------------- */
 .arch-page { max-width: 1000px; margin: 0 auto; padding: 0 24px 96px; }
@@ -341,9 +371,15 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 /* Fade-in on scroll: initial hidden state */
 .arch-section,
 .arch-divider {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+}
+/* Sections start visible by default for accessibility, then JS adds fade-in */
+.arch-section.arch-fade-ready,
+.arch-divider.arch-fade-ready {
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.65s ease-out, transform 0.65s ease-out;
 }
 /* Visible state added by JS */
 .arch-section.arch-visible,
@@ -365,21 +401,30 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   grid-template-columns: 1fr 1fr;
   gap: 64px;
   align-items: center;
-  margin-bottom: 0;
+  margin-bottom: 80px;
 }
 .arch-section--flip .arch-section-visual { order: -1; }
 .arch-section--flip .arch-section-text   { order:  1; }
 
-/* Visual panel */
+/* Visual panel — let scene image define height */
 .arch-visual-panel {
   position: relative;
   border-radius: 24px;
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
   background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, #f7f0e3), color-mix(in srgb, var(--accent) 8%, #eef4f0));
   display: flex; align-items: center; justify-content: center;
+  padding: 16px;
 }
-.arch-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.arch-scene-img {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  object-fit: contain;
+  border-radius: 16px;
+  margin: 0 auto;
+}
+@media (max-width: 1023px) {
+  .arch-scene-img { max-width: 100%; }
+}
 .arch-visual-fallback { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .arch-visual-icon { font-size: 80px; opacity: 0.55; }
 
@@ -415,6 +460,9 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   padding: 32px;
   box-shadow: 0 8px 32px rgba(122,171,138,0.15);
   /* Offset below the sticky nav (68px) + breathing room when scrolled to */
+  scroll-margin-top: 88px;
+}
+.arch-section {
   scroll-margin-top: 88px;
 }
 .arch-your-badge {

@@ -31,6 +31,7 @@ const ARCHETYPES = {
   sirAnimalot: {
     name: 'Sir Animalot',
     icon: '🐾',
+    image: 'assets/sani.png',
     description: 'You lead with your heart. Animals are your greatest allies, and your compassion drives real change. You believe every creature deserves care and protection.',
     scoreField: 'sir_animalot_score',
     pctField:   'sir_animalot_pct',
@@ -38,6 +39,7 @@ const ARCHETYPES = {
   drEnvironlove: {
     name: 'Dr. Environlove',
     icon: '🔬',
+    image: 'assets/de.png',
     description: 'You lead with your mind. Science and knowledge are your superpowers. You understand that solving environmental challenges requires data, research, and innovation.',
     scoreField: 'dr_environlove_score',
     pctField:   'dr_environlove_pct',
@@ -45,6 +47,7 @@ const ARCHETYPES = {
   captainSustainables: {
     name: 'Captain Sustainables',
     icon: '♻️',
+    image: 'assets/cpts.png',
     description: 'You lead with action. You believe in building systems that last — green cities, sustainable habits, and community-driven change.',
     scoreField: 'captain_sustainables_score',
     pctField:   'captain_sustainables_pct',
@@ -52,6 +55,7 @@ const ARCHETYPES = {
   warriorOfTheWild: {
     name: 'Warrior of the Wild',
     icon: '🌲',
+    image: 'assets/wow.png',
     description: 'You lead with courage. The wild calls to you, and you answer. You protect biodiversity and habitats with fierce dedication.',
     scoreField: 'warrior_wild_score',
     pctField:   'warrior_wild_pct',
@@ -471,25 +475,29 @@ function showResult() {
   const firstPrimary = ARCHETYPES[primaryKeys[0]];
   const secondary = ARCHETYPES[secondaryKey];
 
+  const charImg = document.getElementById('result-char-img');
   if (primaryKeys.length === 1) {
-    document.getElementById('result-icon').textContent = firstPrimary.icon;
+    document.getElementById('result-icon').textContent = '';
+    charImg.src = firstPrimary.image;
+    charImg.alt = firstPrimary.name;
+    charImg.classList.remove('hidden');
     document.getElementById('result-title').textContent = firstPrimary.name;
     document.getElementById('result-desc').textContent = firstPrimary.description;
     document.getElementById('result-multi-block').classList.add('hidden');
     document.getElementById('result-single-block').classList.remove('hidden');
   } else {
-    // Multiple tied archetypes
+    charImg.classList.add('hidden');
+    document.getElementById('result-icon').textContent = '';
     document.getElementById('result-single-block').classList.add('hidden');
     const multiBlock = document.getElementById('result-multi-block');
     multiBlock.classList.remove('hidden');
     multiBlock.querySelector('.result-multi-list').innerHTML = primaryKeys.map(k =>
-      `<div class="result-multi-item"><span class="result-multi-icon">${ARCHETYPES[k].icon}</span><span class="result-multi-name">${ARCHETYPES[k].name}</span></div>`
+      `<div class="result-multi-item"><img src="${ARCHETYPES[k].image}" alt="${ARCHETYPES[k].name}" class="result-multi-char-img"><span class="result-multi-name">${ARCHETYPES[k].name}</span></div>`
     ).join('');
-    document.getElementById('result-icon').textContent = '';
   }
 
   if (secondary) {
-    document.getElementById('secondary-name').textContent = `${secondary.icon} ${secondary.name}`;
+    document.getElementById('secondary-name').innerHTML = `<img src="${secondary.image}" alt="" class="secondary-archetype-icon">${secondary.name}`;
     document.getElementById('secondary-block').classList.remove('hidden');
   } else {
     document.getElementById('secondary-block').classList.add('hidden');
@@ -507,7 +515,7 @@ function showResult() {
     row.className = 'score-row' + (isPrimary ? ' primary' : '');
     row.innerHTML = `
       <div class="score-row-header">
-        <span class="score-name">${arch.icon} ${arch.name}</span>
+        <span class="score-name"><img src="${arch.image}" alt="" class="score-icon">${arch.name}</span>
         <span class="score-pct">${pct}%</span>
       </div>
       <div class="score-bar-bg">
