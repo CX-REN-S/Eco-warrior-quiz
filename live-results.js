@@ -6,7 +6,7 @@ const PLEDGES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTpFde2
 const PLEDGE_COLORS        = ['#2c4a2e','#4a7c59','#7aab8a','#8c6d3f','#5a8a6a','#3d6b4f','#6b9e7a','#a07840'];
 const SKIP_PLEDGES         = new Set(['other (please specify)', 'other']);
 const MAX_REASONABLE_COUNT = 100000;
-const MAX_DISPLAY_PLEDGES  = 15;
+const MAX_DISPLAY_PLEDGES  = 200;
 const CSV_FORMAT_ERROR_MSG = 'The connected Google Sheets CSV does not look like the PublicPledges sheet (expected columns: pledge, count).';
 
 let autoRefreshTimer = null;
@@ -104,92 +104,116 @@ function renderCloud(entries, source, errorMsg) {
   updatedEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
 
   const sorted   = [...entries].sort((a, b) => b.count - a.count).slice(0, MAX_DISPLAY_PLEDGES);
+  const n        = sorted.length;
   const maxCount = Math.max(...sorted.map(e => e.count), 1);
 
   const isMobile = window.innerWidth < 768;
-  const minRem   = isMobile ? 0.65 : 1.0;
-  const maxRem   = isMobile ? 1.25 : 2.6;
 
-  // Estimate display width of a pledge at its font size (px).
-  // ~0.58 × fontSize(px) × charCount is a reasonable monospace-safe approximation.
-  const BASE_PX   = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const CHAR_COEF = 0.58;
+  // Global density scale: 1.0 at ≤10 pledges, ~0.38 at 200.
+  const densityScale = Math.max(0.38, 1 / Math.pow(n / 10, 0.52));
 
-  function estWidth(pledge, remSize) {
-    return pledge.length * remSize * BASE_PX * CHAR_COEF;
-  }
+  const minRem = isMobile ? 0.65 : 0.95;
+  const maxRem = isMobile ? 1.3  : 2.6;
 
-  // Available inner width of the cloud container (minus padding already in CSS).
-  const containerW = cloudEl.offsetWidth || (window.innerWidth - 32);
-
-  // Build item objects with pre-computed sizes.
+  // Build items with final font sizes.
   const items = sorted.map((e, i) => {
-    const pct   = e.count / maxCount;
-    const rem   = minRem + pct * (maxRem - minRem);
+    const pct     = e.count / maxCount;
+    const rem     = (minRem + pct * (maxRem - minRem)) * densityScale;
     return {
       pledge:  e.pledge,
       rem,
       pct,
-      opacity: 0.65 + pct * 0.35,
+      opacity: 0.60 + pct * 0.40,
       color:   PLEDGE_COLORS[i % PLEDGE_COLORS.length],
-      estW:    estWidth(e.pledge, rem),
     };
   });
 
   // ------------------------------------------------------------------
-  // Row packing: greedy left-to-right bin packing.
-  // A row fits a second item only when both items' estimated widths
-  // plus a gap fit within the container and neither item is "large"
-  // (pct > 0.55 → solo row so it gets prominence it deserves).
+  // Ring assignment (by rank index, 0-based):
+  //   0        → center
+  //   1–6      → inner ring  (up to 6 items)
+  //   7–24     → middle ring (up to 18 items)
+  //   25+      → outer bands (groups of ~24, split top/bottom)
+  //
+  // Each ring is rendered as one or two flex rows that wrap naturally.
+  // No absolute positioning — overlap is impossible by construction.
   // ------------------------------------------------------------------
-  const GAP_PX    = isMobile ? 12 : 24;
-  const SOLO_PCT  = isMobile ? 0.70 : 0.55; // narrower solo threshold on mobile
-  const rows     = [];
-  let   i        = 0;
+  const center = items[0];
+  const inner  = items.slice(1, 7);
+  const middle = items.slice(7, 25);
+  const outer  = items.slice(25);
 
-  while (i < items.length) {
-    const cur = items[i];
-    const next = items[i + 1];
-
-    const curSolo = cur.pct > SOLO_PCT;
-
-    const pairFits = next &&
-      !curSolo &&
-      next.pct <= SOLO_PCT &&
-      (cur.estW + next.estW + GAP_PX) <= containerW * 0.92;
-
-    if (pairFits) {
-      rows.push([cur, next]);
-      i += 2;
-    } else {
-      rows.push([cur]);
-      i += 1;
-    }
+  // Split an array into two halves: first half goes "top", second "bottom".
+  function halve(arr) {
+    const mid = Math.ceil(arr.length / 2);
+    return [arr.slice(0, mid), arr.slice(mid)];
   }
 
-  // ------------------------------------------------------------------
-  // DOM: one .cloud-row <div> per row, items as <span class="cloud-word">
-  // ------------------------------------------------------------------
-  cloudEl.innerHTML = '';
-  let delayIdx = 0;
+  // Chunk outer pledges into bands of ~24 for additional top/bottom rows.
+  function chunkOuter(arr, size) {
+    const bands = [];
+    for (let i = 0; i < arr.length; i += size) bands.push(arr.slice(i, i + size));
+    return bands;
+  }
 
-  rows.forEach(row => {
-    const rowEl = document.createElement('div');
-    rowEl.className = 'cloud-row';
+  function makeSpan(item, idx) {
+    const el = document.createElement('span');
+    el.className            = 'cloud-word';
+    el.textContent          = item.pledge;
+    el.style.fontSize       = item.rem.toFixed(2) + 'rem';
+    el.style.color          = item.color;
+    el.style.opacity        = item.opacity;
+    el.style.animationDelay = (idx * 0.04) + 's';
+    return el;
+  }
 
-    row.forEach(item => {
-      const el = document.createElement('span');
-      el.className            = 'cloud-word';
-      el.textContent          = item.pledge;
-      el.style.fontSize       = item.rem.toFixed(2) + 'rem';
-      el.style.color          = item.color;
-      el.style.opacity        = item.opacity;
-      el.style.animationDelay = (delayIdx * 0.07) + 's';
-      rowEl.appendChild(el);
-      delayIdx++;
-    });
+  function makeRow(itemsInRow, startIdx, extraClass) {
+    const row = document.createElement('div');
+    row.className = 'cloud-row' + (extraClass ? ' ' + extraClass : '');
+    itemsInRow.forEach((item, i) => row.appendChild(makeSpan(item, startIdx + i)));
+    return row;
+  }
 
-    cloudEl.appendChild(rowEl);
+  // Build DOM structure: outer bands → middle → inner → center → inner → middle → outer bands
+  cloudEl.innerHTML    = '';
+  cloudEl.style.position = '';
+  cloudEl.style.height   = '';
+
+  let delayBase = 0;
+
+  const outerBands = chunkOuter(outer, 24);
+
+  // Top outer bands (least common, farthest)
+  [...outerBands].reverse().forEach(band => {
+    const [top] = halve(band);
+    if (top.length) { cloudEl.appendChild(makeRow(top, delayBase, 'cloud-row--outer')); delayBase += top.length; }
+  });
+
+  // Top middle
+  const [midTop, midBot] = halve(middle);
+  if (midTop.length) { cloudEl.appendChild(makeRow(midTop, delayBase, 'cloud-row--middle')); delayBase += midTop.length; }
+
+  // Top inner
+  const [innerTop, innerBot] = halve(inner);
+  if (innerTop.length) { cloudEl.appendChild(makeRow(innerTop, delayBase, 'cloud-row--inner')); delayBase += innerTop.length; }
+
+  // Center row
+  const centerRow = document.createElement('div');
+  centerRow.className = 'cloud-center-row';
+  centerRow.appendChild(makeSpan(center, delayBase));
+  delayBase++;
+  cloudEl.appendChild(centerRow);
+
+  // Bottom inner
+  if (innerBot.length) { cloudEl.appendChild(makeRow(innerBot, delayBase, 'cloud-row--inner')); delayBase += innerBot.length; }
+
+  // Bottom middle
+  if (midBot.length) { cloudEl.appendChild(makeRow(midBot, delayBase, 'cloud-row--middle')); delayBase += midBot.length; }
+
+  // Bottom outer bands
+  outerBands.forEach(band => {
+    const [, bot] = halve(band);
+    if (bot.length) { cloudEl.appendChild(makeRow(bot, delayBase, 'cloud-row--outer')); delayBase += bot.length; }
   });
 }
 

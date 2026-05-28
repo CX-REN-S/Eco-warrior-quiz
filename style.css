@@ -517,28 +517,36 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   width: 100%;
 }
 
-.cloud-row {
+.cloud-row,
+.cloud-center-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 6px 14px;
   width: 100%;
+}
+
+.cloud-center-row {
+  margin: 6px 0;
 }
 
 .cloud-word {
   display: inline-block;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.35;
   text-align: center;
   white-space: normal;
-  overflow-wrap: anywhere;
   word-break: normal;
-  max-width: 95%;
+  overflow-wrap: break-word;
+  hyphens: none;
+  max-width: min(480px, 92%);
   cursor: default;
   user-select: none;
   animation: fadeInWord 0.4s ease both;
-  padding: 1px 3px;
+  padding: 2px 6px;
+  flex-shrink: 0;
 }
 
 @keyframes fadeInWord {
@@ -639,8 +647,6 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 /* 640px+ — larger phones / small tablets */
 @media (min-width: 640px) {
   .site-nav a { font-size: 0.88rem; }
-  #live-cloud { gap: 8px; }
-  .cloud-row  { gap: 18px; }
 }
 
 /* 768px+ — tablets */
@@ -648,8 +654,6 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   .arch-page { padding: 0 32px 80px; }
   .live-page { padding: 56px 32px 80px; }
   .live-cloud-card { padding: 36px 32px; }
-  #live-cloud { gap: 10px; }
-  .cloud-row  { gap: 22px; }
 }
 
 /* 1024px+ — desktop */
@@ -663,16 +667,12 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 
   .live-page { padding: 64px 24px 96px; }
   .live-cloud-card { padding: 48px 44px; }
-  #live-cloud { gap: 12px; }
-  .cloud-row  { gap: 28px; }
 }
 
 /* 1280px+ — large desktop/monitor */
 @media (min-width: 1280px) {
   .live-page { max-width: 1100px; }
   .live-cloud-card { padding: 56px 60px; }
-  #live-cloud { gap: 14px; }
-  .cloud-row  { gap: 36px; }
 }
 
 /* Narrow phones — tighten spacing */
@@ -681,8 +681,6 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
   .q-text { font-size: 1.05rem; }
   .live-status { flex-direction: column; align-items: flex-start; }
   .live-cloud-card { padding: 20px 14px; }
-  #live-cloud { gap: 5px; }
-  .cloud-row  { gap: 10px; }
 }
 
 /* Nav overflow guard + mobile horizontal-scroll tabs */
