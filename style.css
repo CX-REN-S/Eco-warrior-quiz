@@ -709,6 +709,30 @@ span.nav-contact-account { cursor: default; user-select: text; color: rgba(255,2
 
 /* Nav overflow guard + mobile horizontal-scroll tabs */
 .site-nav { overflow: visible; }
+
+/* Desktop: absolutely-center the nav tabs relative to the full viewport */
+@media (min-width: 769px) {
+  .nav-links {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    flex: none;
+    flex-wrap: nowrap;
+    justify-content: center;
+    /* pointer-events already work; z-index keeps it below the dropdown */
+    z-index: 0;
+  }
+  .nav-ark-logo {
+    position: relative;
+    z-index: 1;
+  }
+  .nav-contact-wrap {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 640px) {
   .site-nav {
     padding: 0 0 0 8px;
