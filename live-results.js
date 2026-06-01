@@ -65,7 +65,7 @@ function getDemoData() {
     { pledge: 'reduce my carbon footprint',        count: 6 },
     { pledge: 'protect local wildlife habitats',   count: 5 },
     { pledge: 'adopt or foster an animal',         count: 4 },
-    { pledge: 'throw money at tigers',             count: 1 },
+    { pledge: 'join ark as a volunteer today',             count: 1 },
   ];
 }
 
